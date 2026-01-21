@@ -35,6 +35,16 @@ class UserController extends Controller
 
     }
 
+    public function logout()
+    {
+        Auth()->logout();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User has been logged out',
+        ]);
+    }
+
     public function store(StoreUserRequest $request)
     {
         if ($request->validated()) {
