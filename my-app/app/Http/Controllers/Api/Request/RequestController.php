@@ -8,6 +8,7 @@ use App\Models\Request as RequestModel;
 use App\Http\Requests\AddRequest;
 use App\Http\Requests\UpdateRequest;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 
 class RequestController extends Controller
 {
@@ -61,9 +62,24 @@ class RequestController extends Controller
 
     public function show($id)
     {
-        return response()->json(
-            RequestModel::findOrFail($id)
-        );
+        $request = RequestModel::with(['approvals' => function ($q) {
+        $q->latest();
+         }])->findOrFail($id);
+
+    $latestApproval = $request->approvals->first();
+
+    return response()->json([
+        'id' => $request->id,
+        'request_id' => $request->request_id,
+        'description' => $request->description,
+        'status' => $request->status,
+        'date' => Carbon::parse($request->created_at)->format('Y-m-d, H:i'),
+        'approval_remarks' => $latestApproval->remarks ?? ''
+    ]);
+
+        // return response()->json(
+        //     RequestModel::findOrFail($id)
+        // );
     }
 
     public function update(UpdateRequest $request, $id)

@@ -1,6 +1,8 @@
 <?php
 
 
+use App\Http\Controllers\Api\Request\ApprovalController;
+use App\Http\Controllers\Api\Request\FulfillmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Request\RequestController;
@@ -17,5 +19,9 @@ Route::get('request/pending', [RequestController::class, 'pending']);
 Route::get('request/{id}', [RequestController::class, 'show']);
 Route::put('request/{id}', [RequestController::class, 'update']);
 Route::delete('request/{id}', [RequestController::class, 'destroy']);
+
+//Approval supplies
+Route::post('/request/{id}/approve', [ApprovalController::class, 'approve']);
+Route::post('/request/{id}/fulfill', [FulfillmentController::class, 'fulfill']);
 
 require __DIR__ . '/auth.php';
