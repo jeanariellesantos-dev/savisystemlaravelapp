@@ -13,6 +13,7 @@ Route::get('/user', function (Request $request) {
 //Request supplies
 Route::post('request', [RequestController::class, 'store']);
 Route::get('request', [RequestController::class, 'index']);
+Route::get('request/pending', [RequestController::class, 'pending']);
 Route::get('request/{id}', [RequestController::class, 'show']);
 Route::put('request/{id}', [RequestController::class, 'update']);
 Route::delete('request/{id}', [RequestController::class, 'destroy']);

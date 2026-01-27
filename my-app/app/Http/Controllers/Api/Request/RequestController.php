@@ -85,4 +85,21 @@ class RequestController extends Controller
             'message' => 'Request deleted successfully',
         ]);
     }
+
+    public function pending()
+    {
+        $role = auth()->user()->role;
+
+        $statusMap = [
+            'ACCOUNTING' => 'PENDING_ACCOUNTING',
+            'SUPERVISOR' => 'PENDING_SUPERVISOR',
+            'INVENTORY' => 'PENDING_INVENTORY'
+        ];
+
+        abort_unless(isset($statusMap[$role]), 403);
+
+        return RequestModel::where('status', $statusMap[$role])->get();
+    }
+
+
 }
