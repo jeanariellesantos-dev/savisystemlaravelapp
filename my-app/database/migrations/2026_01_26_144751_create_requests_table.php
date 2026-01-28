@@ -15,13 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('request_id')->unique();
             $table->string('requestor_id')->constrained('users');
-            $table->text('description');
             $table->enum('status', [
                     'PENDING_ACCOUNTING',
                     'PENDING_SUPERVISOR',
                     'PENDING_INVENTORY',
-                    'FULFILLED',
-                    'REJECTED'
+                    'SHIPPED',
+                    'RECEIVED',
+                    'COMPLETED',
+                    'REJECTED'    
             ])->default('PENDING_ACCOUNTING');
             $table->timestamps();
         });

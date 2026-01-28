@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class Request extends Model
 {
 
-    protected $fillable = [ 'requestor_id','description', 'status'];
+    protected $fillable = [ 'requestor_id', 'status'];
 
     public function approvals()
     {
@@ -18,6 +18,11 @@ class Request extends Model
     public function requestor()
     {
         return $this->belongsTo(User::class, 'requestor_id');
+    }
+
+    public function requestItems()
+    {
+        return $this->hasMany(RequestItem::class);
     }
     
      protected static function booted()

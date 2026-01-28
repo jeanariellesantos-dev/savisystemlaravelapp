@@ -19,7 +19,8 @@ return new class extends Migration
                 'OPERATION',
                 'ACCOUNTING',
                 'SUPERVISOR',
-                'INVENTORY'
+                'INVENTORY',
+                'ADMINISTRATOR'
             ])->default('OPERATION');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();

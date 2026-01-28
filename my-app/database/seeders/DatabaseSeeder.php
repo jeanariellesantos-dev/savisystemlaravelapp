@@ -15,12 +15,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+    //Users
     $users = [
-[
+        [       
+            'firstname' => 'Super',
+            'lastname' => 'Admin',
+            'password' => 'pass123',
+            'role' => 'ADMINISTRATOR',
+            'mobile' => '+639165097848',
+            'email' => 'admin@example.com',
+        ],
+        [       
             'firstname' => 'Jean Arielle',
             'lastname' => 'Santos',
+            'password' => 'pass123',
             'role' => 'OPERATION',
             'mobile' => '+639165097848',
             'email' => 'operation@example.com',
@@ -28,6 +36,7 @@ class DatabaseSeeder extends Seeder
         [
             'firstname' => 'Juan ',
             'lastname' => 'dela Cruz',
+            'password' => 'pass123',
             'role' => 'ACCOUNTING',
             'mobile' => '+639165097848',
             'email' => 'accounting@example.com',
@@ -35,6 +44,7 @@ class DatabaseSeeder extends Seeder
         [
             'firstname' => 'Ychy',
             'lastname' => 'Katigbak',
+            'password' => 'pass123',
             'role' => 'SUPERVISOR',
             'mobile' => '+639165097848',
             'email' => 'supervisor@example.com',
@@ -42,23 +52,22 @@ class DatabaseSeeder extends Seeder
         [
             'firstname' => 'Kessiah',
             'lastname' => 'Katigbak',
+            'password' => 'pass123',
             'role' => 'INVENTORY',
             'mobile' => '+639165097848',
             'email' => 'inventory@example.com',
         ]
 
     ];
-
-        // User::factory()->create([
-        //     'firstname' => 'Jean Arielle',
-        //     'lastname' => 'Santos',
-        //     'role' => 'OPERATION',
-        //     'mobile' => '+639165097848',
-        //     'email' => 'operation@example.com',
-        // ]);
-
         foreach ($users as $user) {
             User::create($user);
         }
+
+        $this->call([
+            ProductSeeder::class,
+            RequestSeeder::class,
+            RequestItemSeeder::class,
+        ]);
+
     }
 }
