@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
-            $table->string('request_id')->unique()->constrained('users');
+            $table->string('request_id')->unique();
+            $table->string('requestor_id')->constrained('users');
             $table->text('description');
             $table->enum('status', [
                     'PENDING_ACCOUNTING',

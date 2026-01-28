@@ -52,7 +52,7 @@ class UserController extends Controller
 
             if ($user) {
 
-                $this->service->sendVerificationLink($user);
+            //    $this->service->sendVerificationLink($user);
 
                 $token = auth()->login($user);
                 return $this->responseWithToken($token, $user);
@@ -79,7 +79,15 @@ class UserController extends Controller
             'user' => $user,
             'access_token' => $token,
             'type' => 'bearer',
-        ]);
+        ])->cookie(
+            'access_token',
+            $token,
+            60,     // minutes
+            '/',
+            'localhost',
+            false,  // secure
+            true    // HttpOnly
+        );
 
     }
 

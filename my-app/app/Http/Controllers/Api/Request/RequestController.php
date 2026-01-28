@@ -51,7 +51,13 @@ class RequestController extends Controller
 
         Log::info($request);
 
-        $req = RequestModel::create($validated);
+        $req = RequestModel::create([
+            'requestor_id' => auth()->id(),
+            'status' => $request->status,
+            'description' => $request->description
+        ]);
+
+        // $req = RequestModel::create($validated);
 
         return response()->json([
         'message' => 'Request created successfully',
@@ -71,6 +77,7 @@ class RequestController extends Controller
     return response()->json([
         'id' => $request->id,
         'request_id' => $request->request_id,
+        'requestor_id' => $request->requestor_id,
         'description' => $request->description,
         'status' => $request->status,
         'date' => Carbon::parse($request->created_at)->format('Y-m-d, H:i'),
@@ -104,7 +111,17 @@ class RequestController extends Controller
 
     public function pending()
     {
-        $role = auth()->user()->role;
+        // $role = auth()->user()->role;
+
+        $user = auth()->user();
+
+            // REQUESTOR: return only his own requests
+        if ($user->role === 'OPERATION') {
+            return RequestModel::where('requestor_id', $user->id)
+                ->with('requestor:id,firstname')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
 
         $statusMap = [
             'ACCOUNTING' => 'PENDING_ACCOUNTING',
@@ -112,9 +129,12 @@ class RequestController extends Controller
             'INVENTORY' => 'PENDING_INVENTORY'
         ];
 
-        abort_unless(isset($statusMap[$role]), 403);
+        abort_unless(isset($statusMap[$user->role]), 403);
 
-        return RequestModel::where('status', $statusMap[$role])->get();
+        return RequestModel::where('status', $statusMap[$user->role])
+        ->with('requestor:id,firstname')
+        ->orderBy('created_at', 'asc')
+        ->get();
     }
 
 

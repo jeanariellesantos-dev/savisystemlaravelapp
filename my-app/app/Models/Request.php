@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class Request extends Model
 {
 
-    protected $fillable = ['description', 'status'];
+    protected $fillable = [ 'requestor_id','description', 'status'];
 
     public function approvals()
     {

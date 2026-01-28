@@ -17,12 +17,48 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'firstname' => 'Test User',
-            'lastname' => 'Test User',
+    $users = [
+[
+            'firstname' => 'Jean Arielle',
+            'lastname' => 'Santos',
             'role' => 'OPERATION',
             'mobile' => '+639165097848',
-            'email' => 'test@example.com',
-        ]);
+            'email' => 'operation@example.com',
+        ],
+        [
+            'firstname' => 'Juan ',
+            'lastname' => 'dela Cruz',
+            'role' => 'ACCOUNTING',
+            'mobile' => '+639165097848',
+            'email' => 'accounting@example.com',
+        ],
+        [
+            'firstname' => 'Ychy',
+            'lastname' => 'Katigbak',
+            'role' => 'SUPERVISOR',
+            'mobile' => '+639165097848',
+            'email' => 'supervisor@example.com',
+        ],
+        [
+            'firstname' => 'Kessiah',
+            'lastname' => 'Katigbak',
+            'role' => 'INVENTORY',
+            'mobile' => '+639165097848',
+            'email' => 'inventory@example.com',
+        ]
+
+    ];
+
+        // User::factory()->create([
+        //     'firstname' => 'Jean Arielle',
+        //     'lastname' => 'Santos',
+        //     'role' => 'OPERATION',
+        //     'mobile' => '+639165097848',
+        //     'email' => 'operation@example.com',
+        // ]);
+
+        foreach ($users as $user) {
+            User::create($user);
+        }
     }
 }
