@@ -68,7 +68,21 @@ class FulfillmentController extends Controller
             'request_id' => $req->id,
             'updated_by' => auth()->id(),
             'status' => $req->status
-         ]);    
+         ]);   
+         
+        DB::transaction(function () use ($req) {
+
+            $req->shipments()->update([
+                'status' => 'RECEIVED',
+                'received_date' => now()
+            ]);
+     
+            RequestStatusLog::create([
+                'request_id' => $req->id,
+                'updated_by' => auth()->id(),
+                'status' => $req->status
+            ]);
+        });
 
         return response()->json(['message' => 'Order has been received']);
     }
