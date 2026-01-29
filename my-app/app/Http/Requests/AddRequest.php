@@ -23,8 +23,10 @@ class AddRequest extends FormRequest
     {
         return [
             //            
-            'description' => 'required|string',
-            'status' => 'required|string',
+            'status' => 'required|string|max:255',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
         ];
     }
 }

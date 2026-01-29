@@ -24,6 +24,9 @@ class FulfillmentController extends Controller
             'remarks' => $request->remarks
         ]);
 
+
+        
+
         return response()->json(['message' => 'Order has been shipped']);
     }
 

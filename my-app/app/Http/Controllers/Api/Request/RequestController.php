@@ -53,8 +53,7 @@ class RequestController extends Controller
 
         Log::info($request);
 
-
-         DB::transaction(function () use ($validated, &$request) {
+        DB::transaction(function () use ($validated, &$request) {
             $req = RequestModel::create([
                 'requestor_id' => auth()->id(),
                 'status' => $request->status,
