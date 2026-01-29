@@ -22,7 +22,7 @@ return new class extends Migration
                     'COMPLETED',
                     'REJECTED'    
             ])->default('PENDING_ACCOUNTING');
-            $table->foreignId('updated_by')->constrained()->cascadeOnDelete();
+            $table->foreignId('updated_by')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
     }

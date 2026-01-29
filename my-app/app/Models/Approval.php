@@ -9,7 +9,7 @@ class Approval extends Model
     //
         protected $fillable = [
         'request_id',
-        'user_id',
+        'approver_id',
         'action',
         'remarks'
     ];

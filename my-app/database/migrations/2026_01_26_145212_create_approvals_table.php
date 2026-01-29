@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('approvals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained();
-            $table->foreignId('user_id')->constrained();
+            $table->foreignId('approver_id')->constrained('users');
             $table->enum('action', ['APPROVED', 'REJECTED']);
             $table->text('remarks')->nullable();
             $table->timestamps();

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Approval;
 use App\Models\Request as RequestModel;
+use Illuminate\Support\Facades\DB;
 
 class FulfillmentController extends Controller
 {
@@ -17,17 +18,35 @@ class FulfillmentController extends Controller
         $req->status = 'SHIPPED';
         $req->save();
 
+        $validated = $request->validate([
+            'shipment' => 'required|array|min:1',
+
+            'shipment.*.batch_number' => 'required|string',
+            'shipment.*.shipped_by' => 'required|exists:users,id',
+            'shipment.*.shipped_date' => 'nullable|date',
+            'shipment.*.received_date' => 'nullable|date',
+            'shipment.*.status' => 'required|string',
+        ]);
+
+        DB::transaction(function () use ($validated, $req) {
+
+            $req->shipments()->createMany(
+                $validated['shipment']
+            );
+
+        });
+
         Approval::create([
             'request_id' => $req->id,
-            'user_id' => auth()->id(),
+            'approver_id' => auth()->id(),
             'action' => 'APPROVED',
             'remarks' => $request->remarks
         ]);
 
-
-        
-
-        return response()->json(['message' => 'Order has been shipped']);
+        return response()->json([
+            'message' => 'Order has been shipped',
+            'data' => $req->load('shipments')
+        ], 201);
     }
 
         public function received(Request $request, $id)

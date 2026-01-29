@@ -33,7 +33,7 @@ class ApprovalController extends Controller
 
     Approval::create([
         'request_id' => $req->id,
-        'user_id' => auth()->id(),
+        'approver_id' => auth()->id(),
         'action' => $request->action,
         'remarks' => $request->remarks
     ]);

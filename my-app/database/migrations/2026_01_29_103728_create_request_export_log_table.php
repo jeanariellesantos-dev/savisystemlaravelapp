@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('request_export_log', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('exported_by')->constrained()->cascadeOnDelete();
+            $table->foreignId('exported_by')->constrained('users')->cascadeOnDelete();
             $table->enum('export_format', allowed: ['PDF', 'EXCEL']);
             $table->timestamps();
         });

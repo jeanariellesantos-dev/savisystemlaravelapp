@@ -20,6 +20,11 @@ class Request extends Model
         return $this->belongsTo(User::class, 'requestor_id');
     }
 
+    public function shipments()
+    {
+        return $this->hasMany(Shipment::class);
+    }
+
     public function requestItems()
     {
         return $this->hasMany(RequestItem::class);

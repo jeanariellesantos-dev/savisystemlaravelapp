@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Request\FulfillmentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Request\RequestController;
+use App\Http\Controllers\Api\ShipmentController;
 
 
 Route::get('/user', function (Request $request) {
@@ -24,5 +25,14 @@ Route::delete('request/{id}', [RequestController::class, 'destroy']);
 Route::post('/request/{id}/approve', [ApprovalController::class, 'approve']);
 Route::post('/request/{id}/fulfill', [FulfillmentController::class, 'fulfill']);
 Route::post('/request/{id}/receive', [FulfillmentController::class, 'receive']);
+
+//Shipment
+
+Route::prefix('shipments')->group(function () {
+    Route::get('/', [ShipmentController::class, 'index']);          // list
+    Route::post('/', [ShipmentController::class, 'store']);         // create
+    Route::patch('{shipment}/status', [ShipmentController::class, 'updateStatus']);
+    Route::delete('{shipment}', [ShipmentController::class, 'destroy']);
+});
 
 require __DIR__ . '/auth.php';

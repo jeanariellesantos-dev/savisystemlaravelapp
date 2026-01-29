@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('shipment', function (Blueprint $table) {
+        Schema::create('shipments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained()->cascadeOnDelete();
             $table->integer('batch_number');
-            $table->string('shipped_by')->constrained('users');
-            $table->timestamp('shipped_date');
-            $table->timestamp('received_date');
+            $table->foreignId('shipped_by')->constrained('users')->cascadeOnDelete();
+            $table->date('shipped_date')->nullable();
+            $table->date('received_date')->nullable();
             $table->enum('status', [
                                'SHIPPED',
                                'RECEIVED'    
@@ -32,5 +32,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('shipment');
+        
     }
 };
