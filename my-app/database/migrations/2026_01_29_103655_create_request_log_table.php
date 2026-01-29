@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('request_statuslog', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('request_id')->constrained()->cascadeOnDelete();
             $table->enum('status', [
                     'PENDING_ACCOUNTING',
                     'PENDING_SUPERVISOR',
@@ -32,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('request_log');
+        Schema::dropIfExists('request_statuslog');
     }
 };

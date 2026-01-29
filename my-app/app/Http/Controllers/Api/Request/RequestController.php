@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Request;
 
 use App\Http\Controllers\Controller;
+use App\Models\RequestStatusLog;
 use Illuminate\Http\Request;
 use App\Models\Request as RequestModel;
 use App\Models\Product;
@@ -77,6 +78,12 @@ class RequestController extends Controller
                     'ending_balance' => $endingBalance
                 ]);
             }
+     
+            RequestStatusLog::create([
+                'request_id' => $req->id,
+                'updated_by' => auth()->id(),
+                'status' => $req->status
+            ]);
         });
 
         // $req = RequestModel::create($validated);

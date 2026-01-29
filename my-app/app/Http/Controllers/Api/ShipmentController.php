@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Shipment;
+
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Shipment;
 use Illuminate\Support\Facades\DB;
 
 class ShipmentController extends Controller
@@ -49,27 +50,28 @@ class ShipmentController extends Controller
     /**
      * Update shipment status
      */
-    public function updateStatus(Request $request, Shipment $shipment)
+    public function updateStatus(Request $request, $id)
     {
         $validated = $request->validate([
             'status' => 'required|string',
             'received_date' => 'nullable|date',
         ]);
 
-        $shipment->update($validated);
+        $requestData = Shipment::findOrFail($id);
+        $requestData->update($request->validated());
 
         return response()->json([
             'message' => 'Shipment status updated',
-            'data' => $shipment
+            'data' => $requestData
         ]);
     }
 
     /**
      * Delete a shipment
      */
-    public function destroy(Shipment $shipment)
+    public function destroy($id)
     {
-        $shipment->delete();
+        Shipment::findOrFail($id)->delete();
 
         return response()->json([
             'message' => 'Shipment deleted successfully'

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Approval;
+use App\Models\RequestStatusLog;
 use App\Models\Request as RequestModel;
 
 class ApprovalController extends Controller
@@ -36,6 +37,12 @@ class ApprovalController extends Controller
         'approver_id' => auth()->id(),
         'action' => $request->action,
         'remarks' => $request->remarks
+    ]);
+
+    RequestStatusLog::create([
+        'request_id' => $req->id,
+        'updated_by' => auth()->id(),
+        'status' => $req->status
     ]);
 
     $req->save();

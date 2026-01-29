@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Approval;
 use App\Models\Request as RequestModel;
+use App\Models\RequestStatusLog;
 use Illuminate\Support\Facades\DB;
 
 class FulfillmentController extends Controller
@@ -43,6 +44,12 @@ class FulfillmentController extends Controller
             'remarks' => $request->remarks
         ]);
 
+        RequestStatusLog::create([
+            'request_id' => $req->id,
+            'updated_by' => auth()->id(),
+            'status' => $req->status
+         ]);    
+
         return response()->json([
             'message' => 'Order has been shipped',
             'data' => $req->load('shipments')
@@ -57,12 +64,11 @@ class FulfillmentController extends Controller
         $req->status = 'RECEIVED';
         $req->save();
 
-        // Approval::create([
-        //     'request_id' => $req->id,
-        //     'user_id' => auth()->id(),
-        //     'action' => 'RECEIVED',
-        //     'remarks' => $request->remarks
-        // ]);
+        RequestStatusLog::create([
+            'request_id' => $req->id,
+            'updated_by' => auth()->id(),
+            'status' => $req->status
+         ]);    
 
         return response()->json(['message' => 'Order has been received']);
     }

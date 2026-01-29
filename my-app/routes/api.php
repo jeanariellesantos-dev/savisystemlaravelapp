@@ -27,12 +27,11 @@ Route::post('/request/{id}/fulfill', [FulfillmentController::class, 'fulfill']);
 Route::post('/request/{id}/receive', [FulfillmentController::class, 'receive']);
 
 //Shipment
-
-Route::prefix('shipments')->group(function () {
+Route::prefix('shipment')->group(function () {
     Route::get('/', [ShipmentController::class, 'index']);          // list
     Route::post('/', [ShipmentController::class, 'store']);         // create
-    Route::patch('{shipment}/status', [ShipmentController::class, 'updateStatus']);
-    Route::delete('{shipment}', [ShipmentController::class, 'destroy']);
+    Route::patch('{id}/status', [ShipmentController::class, 'updateStatus']);
+    Route::delete('{id}', [ShipmentController::class, 'destroy']);
 });
 
 require __DIR__ . '/auth.php';

@@ -29,6 +29,11 @@ class Request extends Model
     {
         return $this->hasMany(RequestItem::class);
     }
+
+    public function requestStatusLog()
+    {
+        return $this->hasMany(RequestStatusLog::class);
+    }
     
      protected static function booted()
     {
