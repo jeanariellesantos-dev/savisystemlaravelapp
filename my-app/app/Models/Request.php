@@ -14,7 +14,6 @@ class Request extends Model
     {
         return $this->hasMany(Approval::class);
     }
-
     public function requestor()
     {
         return $this->belongsTo(User::class, 'requestor_id');
@@ -25,7 +24,7 @@ class Request extends Model
         return $this->hasMany(Shipment::class);
     }
 
-    public function requestItems()
+    public function items()
     {
         return $this->hasMany(RequestItem::class,'request_id');
     }

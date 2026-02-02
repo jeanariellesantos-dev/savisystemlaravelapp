@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Request;
 
 use App\Http\Controllers\Controller;
+use App\Models\Shipment;
 use Illuminate\Http\Request;
 use App\Models\Approval;
 use App\Models\Request as RequestModel;
@@ -16,33 +17,44 @@ class FulfillmentController extends Controller
         abort_unless(auth()->user()->role === 'INVENTORY', 403);
 
         $req = RequestModel::findOrFail($id);
-        $req->status = 'SHIPPED';
-        $req->save();
 
         $validated = $request->validate([
-            'shipment' => 'required|array|min:1',
-
-            'shipment.*.batch_number' => 'required|string',
-            'shipment.*.shipped_by' => 'required|exists:users,id',
-            'shipment.*.shipped_date' => 'nullable|date',
-            'shipment.*.received_date' => 'nullable|date',
-            'shipment.*.status' => 'required|string',
+            'remarks'=> 'nullable|string',
+            'shipments' => ['required', 'array', 'min:1'],
+            'shipments.*.shipped_date' => ['required', 'date'],
+            'shipments.*.tracking_link' => ['required', 'url'],
         ]);
 
-        DB::transaction(function () use ($validated, $req) {
+        // Optional: ensure correct status
+        if ($req->status !== 'PENDING_INVENTORY') {
+            return response()->json([
+                'message' => 'Request is not ready for shipment'
+            ], 422);
+        }
 
-            $req->shipments()->createMany(
-                $validated['shipment']
-            );
+        foreach ($request->shipments as $shipment) {
+            Shipment::create([
+                'request_id'    => $req->id,
+                'batch_number'    => '1',
+                'shipped_by'    => $req->requestor_id,
+                'shipped_date'  => $shipment['shipped_date'],
+                'received_date' => $shipment['received_date'] ?? null,
+                'tracking_link' => $shipment['tracking_link'],
+                'status' => 'SHIPPED'
+            ]);
+        }
 
-        });
-
-        Approval::create([
-            'request_id' => $req->id,
-            'approver_id' => auth()->id(),
-            'action' => 'APPROVED',
-            'remarks' => $request->remarks
+        // Optional status transition
+        $req->update([
+            'status' => 'SHIPPED',
         ]);
+
+        // Approval::create([
+        //     'request_id' => $req->id,
+        //     'approver_id' => auth()->id(),
+        //     'action' => 'APPROVED',
+        //     'remarks' => $request->remarks
+        // ]);
 
         RequestStatusLog::create([
             'request_id' => $req->id,
@@ -77,11 +89,11 @@ class FulfillmentController extends Controller
                 'received_date' => now()
             ]);
      
-            RequestStatusLog::create([
-                'request_id' => $req->id,
-                'updated_by' => auth()->id(),
-                'status' => $req->status
-            ]);
+            // RequestStatusLog::create([
+            //     'request_id' => $req->id,
+            //     'updated_by' => auth()->id(),
+            //     'status' => $req->status
+            // ]);
         });
 
         return response()->json(['message' => 'Order has been received']);

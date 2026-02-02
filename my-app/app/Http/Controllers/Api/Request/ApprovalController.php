@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Approval;
-use App\Models\RequestStatusLog;
 use App\Models\Request as RequestModel;
+use App\Models\RequestStatusLog;
 
 class ApprovalController extends Controller
 {
@@ -22,7 +22,7 @@ class ApprovalController extends Controller
 
     $flow = [
         'ACCOUNTING' => 'PENDING_SUPERVISOR',
-        'SUPERVISOR' => 'PENDING_INVENTORY'
+        'SUPERVISOR' => 'PENDING_INVENTORY',
     ];
 
     if ($request->action === 'REJECTED') {

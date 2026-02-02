@@ -24,12 +24,12 @@ Route::middleware('auth:api')->group(function () {
     Route::put('request/{id}', [RequestController::class, 'update']);
     Route::delete('request/{id}', [RequestController::class, 'destroy']);
 
-});
+    //Approval supplies
+    Route::post('/request/{id}/approve', [ApprovalController::class, 'approve']);
+    Route::post('/request/{id}/fulfill', [FulfillmentController::class, 'fulfill']);
+    Route::post('/request/{id}/receive', [FulfillmentController::class, 'receive']);
 
-//Approval supplies
-Route::post('/request/{id}/approve', [ApprovalController::class, 'approve']);
-Route::post('/request/{id}/fulfill', [FulfillmentController::class, 'fulfill']);
-Route::post('/request/{id}/receive', [FulfillmentController::class, 'receive']);
+});
 
 //Shipment
 Route::prefix('shipment')->group(function () {
