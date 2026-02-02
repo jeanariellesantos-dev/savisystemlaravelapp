@@ -77,10 +77,10 @@ class UserController extends Controller
         return response()->json([
             'status' => 'success',
             'user' => $user,
-            'access_token' => $token,
+            'token' => $token,
             'type' => 'bearer',
         ])->cookie(
-            'access_token',
+            'token',
             $token,
             60,     // minutes
             '/',

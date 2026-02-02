@@ -12,6 +12,8 @@ use App\Http\Requests\UpdateRequest;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class RequestController extends Controller
 {
@@ -43,56 +45,72 @@ class RequestController extends Controller
 
 
     //Add new request
-    public function store(AddRequest $request)
-    {
-        $validated = $request->validate([
-            'status' => 'required|string|max:255',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
+public function store(AddRequest $request)
+{
+    // ✅ Authenticated via Bearer token (auth:api middleware should already enforce this)
+    $user = Auth::user();
+
+    if (!$user) {
+        return response()->json(['message' => 'Unauthenticated'], 401);
+    }
+
+    // ✅ Validation (you can move this fully into AddRequest later)
+    $validated = $request->validate([
+        'status' => 'required|string|max:255',
+        'items' => 'required|array|min:1',
+        'items.*.product_id' => 'required|exists:products,id',
+        'items.*.quantity' => 'required|integer|min:1',
+    ]);
+
+    DB::transaction(function () use ($validated, $user, &$req) {
+
+        // ✅ Create request
+        $req = RequestModel::create([
+            'requestor_id' => $user->id,
+            'status' => $validated['status'],
         ]);
 
-        Log::info($request);
+        // ✅ Create request items + update inventory
+        foreach ($validated['items'] as $item) {
+            $product = Product::lockForUpdate()->findOrFail($item['product_id']);
 
-        DB::transaction(function () use ($validated, &$request) {
-            $req = RequestModel::create([
-                'requestor_id' => auth()->id(),
-                'status' => $request->status,
-            ]);
+            $startingBalance = $product->quantity;
+            $endingBalance   = $startingBalance - $item['quantity'];
 
-            foreach ($validated['items'] as $item) {
-                $product = Product::find($item['product_id']);
-
-                $startingBalance = $product->quantity;
-                $endingBalance = $startingBalance - $item['quantity'];
-
-                // Update product stock
-                $product->update([
-                    'quantity' => $endingBalance
-                ]);
-
-                $req->items()->create([
-                    'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
-                    'starting_balance' => $startingBalance,
-                    'ending_balance' => $endingBalance
-                ]);
+            if ($endingBalance < 0) {
+                throw new \Exception("Insufficient stock for {$product->product_name}");
             }
-     
-            RequestStatusLog::create([
-                'request_id' => $req->id,
-                'updated_by' => auth()->id(),
-                'status' => $req->status
+
+            $product->update([
+                'quantity' => $endingBalance,
             ]);
-        });
 
-        // $req = RequestModel::create($validated);
+            $req->items()->create([
+                'product_id'       => $product->id,
+                'quantity'         => $item['quantity'],
+                'starting_balance' => $startingBalance,
+                'ending_balance'   => $endingBalance,
+            ]);
+        }
 
-       return response()->json([
-            'message' => 'Request created successfully',
-            'data' => $request->load('items.product')
-        ], 201);
-    }
+        // ✅ Log initial status
+        RequestStatusLog::create([
+            'request_id' => $req->id,
+            'updated_by' => $user->id,
+            'status'     => $req->status,
+        ]);
+    });
+
+    // ✅ Return the CREATED request (NOT the HTTP request object)
+    return response()->json([
+        'message' => 'Request created successfully',
+        'data' => $req->load([
+            'items.product',
+            'requestor',
+        ]),
+    ], 201);
+}
+
 
 
     public function show($id)
@@ -153,37 +171,39 @@ class RequestController extends Controller
         ]);
     }
 
-    public function pending()
-    {
-        $user = auth()->user();
+public function pending()
+{
+    $user = auth()->user();
 
-        // REQUESTOR: return only his own requests
-        if ($user->role === 'OPERATION') {
-            return RequestModel::where('requestor_id', $user->id)
-                ->with([
-                    'requestor:id,firstname',
-                    'requestItems.product'
-                ])
-                ->orderBy('created_at', 'desc')
-                ->get();
-        }
-
-        $statusMap = [
-            'ACCOUNTING' => 'PENDING_ACCOUNTING',
-            'SUPERVISOR' => 'PENDING_SUPERVISOR',
-            'INVENTORY' => 'PENDING_INVENTORY'
-        ];
-
-        abort_unless(isset($statusMap[$user->role]), 403);
-
-        return RequestModel::where('status', $statusMap[$user->role])
+    if ($user->role === 'OPERATION') {
+        return RequestModel::where('requestor_id', $user->id)
             ->with([
                 'requestor:id,firstname',
-                'requestItems.product'
+                'items.product',
+                'approvals:id,remarks'
             ])
             ->orderBy('created_at', 'asc')
             ->get();
     }
+
+    $statusMap = [
+        'ACCOUNTING' => 'PENDING_ACCOUNTING',
+        'SUPERVISOR' => 'PENDING_SUPERVISOR',
+        'INVENTORY' => 'PENDING_INVENTORY'
+    ];
+
+    abort_unless(isset($statusMap[$user->role]), 403);
+
+    return RequestModel::where('status', $statusMap[$user->role])
+        ->with([
+            'requestor:id,firstname',
+            'items.product',
+            'approvals:id,remarks'
+        ])
+        ->orderBy('created_at', 'asc')
+        ->get();
+}
+
 
 
 

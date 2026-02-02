@@ -7,7 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 class RequestStatusLog extends Model
 {
     //
-    protected $fillable = [ 'status', 'updated_by'];
+    protected $fillable = [
+        'request_id',   // ✅ REQUIRED
+        'status',
+        'updated_by',
+    ];
 
+    // ✅ Recommended relationships
+    public function request()
+    {
+        return $this->belongsTo(Request::class);
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 
 }

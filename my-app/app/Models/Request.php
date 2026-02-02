@@ -27,7 +27,7 @@ class Request extends Model
 
     public function requestItems()
     {
-        return $this->hasMany(RequestItem::class);
+        return $this->hasMany(RequestItem::class,'request_id');
     }
 
     public function requestStatusLog()

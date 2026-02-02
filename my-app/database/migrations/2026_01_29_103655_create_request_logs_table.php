@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('request_statuslog', function (Blueprint $table) {
+        Schema::create('request_status_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained()->cascadeOnDelete();
             $table->enum('status', [
@@ -33,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('request_statuslog');
+        Schema::dropIfExists('request_status_logs');
     }
 };
