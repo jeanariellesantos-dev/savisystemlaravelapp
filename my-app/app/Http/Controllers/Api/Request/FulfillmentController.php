@@ -68,7 +68,7 @@ class FulfillmentController extends Controller
         ], 201);
     }
 
-        public function received(Request $request, $id)
+        public function receive(Request $request, $id)
     {
         abort_unless(auth()->user()->role === 'OPERATION', 403);
 

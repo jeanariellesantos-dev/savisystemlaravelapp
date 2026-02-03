@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('shipped_by')->constrained('users')->cascadeOnDelete();
             $table->date('shipped_date')->nullable();
             $table->date('received_date')->nullable();
+            $table->string('tracking_link')->nullable();
             $table->enum('status', [
                                'SHIPPED',
                                'RECEIVED'    

@@ -13,6 +13,7 @@ class Shipment extends Model
         'shipped_by',
         'shipped_date',
         'received_date',
+        'tracking_link',
         'status'
     ];
 

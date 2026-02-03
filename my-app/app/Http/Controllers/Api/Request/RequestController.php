@@ -180,7 +180,8 @@ public function pending()
             ->with([
                 'requestor:id,firstname',
                 'items.product',
-                'approvals:id,request_id,remarks'
+                'approvals:id,request_id,remarks',
+                'shipments:id,request_id,shipped_date,tracking_link'
             ])
             ->orderBy('created_at', 'asc')
             ->get();
@@ -198,7 +199,8 @@ public function pending()
         ->with([
             'requestor:id,firstname',
             'items.product',
-            'approvals:id,request_id,remarks'
+            'approvals:id,request_id,remarks',
+            'shipments:id,request_id,shipped_date,tracking_link'
         ])
         ->orderBy('created_at', 'asc')
         ->get();
