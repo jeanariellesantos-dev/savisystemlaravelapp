@@ -19,7 +19,8 @@ class ApprovalController extends Controller
 
     $req = RequestModel::findOrFail($id);
     $user = auth()->user();
-    $role = strtoupper($user->role);
+    $roleName = $user->role->role_name;
+    $role = strtoupper( $roleName);
 
     $flow = [
         'ACCOUNTING' => 'PENDING_SUPERVISOR',
@@ -45,6 +46,7 @@ class ApprovalController extends Controller
     Approval::create([
         'request_id' => $req->id,
         'approver_id' => auth()->id(),
+        'role_id' => $user->id,
         'action' => $request->action,
         'remarks' => $formattedRemarks
     ]);

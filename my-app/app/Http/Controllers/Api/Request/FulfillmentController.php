@@ -14,11 +14,14 @@ class FulfillmentController extends Controller
 {
     public function fulfill(Request $request, $id)
     {
-        abort_unless(auth()->user()->role === 'INVENTORY', 403);
+        $user = auth()->user();
+        $roleName = $user->role->role_name;
+        $role = strtoupper($roleName);
+
+        abort_unless($roleName === 'INVENTORY', 403);
 
         $req = RequestModel::findOrFail($id);
-        $user = auth()->user();
-        $role = strtoupper($user->role);
+
 
          // Optional: ensure correct status
         if ($req->status !== 'PENDING_INVENTORY') {
@@ -78,14 +81,15 @@ class FulfillmentController extends Controller
 
         public function receive(Request $request, $id)
     {
-        abort_unless(auth()->user()->role === 'OPERATION', 403);
+        $user = auth()->user();
+        $roleName = $user->role->role_name;
+        $role = strtoupper($roleName);
+
+        abort_unless($roleName === 'OPERATION', 403);
 
         $req = RequestModel::findOrFail($id);
         $req->status = 'RECEIVED';
         $req->save();
-
-        $user = auth()->user();
-        $role = strtoupper($user->role);
 
          // ✅ Prefix remarks with role (only if remarks exist)
         $formattedRemarks = "[{$role}]: " . (

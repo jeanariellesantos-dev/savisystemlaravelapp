@@ -174,8 +174,9 @@ public function store(AddRequest $request)
 public function pending()
 {
     $user = auth()->user();
+    $roleName = $user->role->role_name;
 
-    if ($user->role === 'OPERATION') {
+    if ($roleName === 'OPERATION') {
         return RequestModel::where('requestor_id', $user->id)
             ->with([
                 'requestor:id,firstname',
@@ -193,9 +194,9 @@ public function pending()
         'INVENTORY' => 'PENDING_INVENTORY'
     ];
 
-    abort_unless(isset($statusMap[$user->role]), 403);
+    abort_unless(isset($statusMap[$roleName]), 403);
 
-    return RequestModel::where('status', $statusMap[$user->role])
+    return RequestModel::where('status', $statusMap[$roleName])
         ->with([
             'requestor:id,firstname',
             'items.product',

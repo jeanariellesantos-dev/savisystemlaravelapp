@@ -20,7 +20,8 @@ class StoreUserRequest extends FormRequest
             "firstname" => 'required|string|max:255',
             "lastname" => 'required|string|max:255',
             "mobile" => 'required|string|max:255',
-            "role" => 'required|string|max:255',
+            "role_id" => 'required|integer|min:1',
+            "dealership_id" => 'nullable|exists:dealerships,id',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
         ];

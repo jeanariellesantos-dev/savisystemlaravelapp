@@ -74,11 +74,21 @@ class UserController extends Controller
 
     public function responseWithToken($token, $user)
     {
-        return response()->json([
-            'status' => 'success',
-            'user' => $user,
-            'token' => $token,
-            'type' => 'bearer',
+    $user->load('role');
+
+    return response()->json([
+        'status' => 'success',
+        'user' => [
+            'id' => $user->id,
+            'firstname' => $user->firstname,
+            'lastname' => $user->lastname,
+            'email' => $user->email,
+            'mobile' => $user->mobile,
+            'role' => $user->role?->role_name,
+            'role_description' => $user->role?->role_description, 
+        ],
+        'token' => $token,
+        'type' => 'bearer',
         ])->cookie(
             'token',
             $token,

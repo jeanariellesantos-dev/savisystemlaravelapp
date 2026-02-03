@@ -15,19 +15,19 @@ return new class extends Migration
             $table->id();
             $table->string('firstname');
             $table->string('lastname');
-            $table->enum('role', [
-                'OPERATION',
-                'ACCOUNTING',
-                'SUPERVISOR',
-                'INVENTORY',
-                'ADMINISTRATOR'
-            ])->default('OPERATION');
+            $table->foreignId('role_id')
+                    ->constrained('roles')
+                    ->cascadeOnDelete();
+            // Dealership (OPTIONAL)
+            $table->foreignId('dealership_id')
+                  ->nullable()
+                  ->constrained('dealerships')
+                  ->nullOnDelete();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->integer('is_active')->default(1);
             $table->rememberToken();
-            
             $table->timestamps();
         });
 
