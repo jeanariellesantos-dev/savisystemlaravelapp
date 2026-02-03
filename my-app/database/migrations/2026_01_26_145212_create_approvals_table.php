@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('request_id')->constrained();
             $table->foreignId('approver_id')->constrained('users');
-            $table->enum('action', ['APPROVED', 'REJECTED']);
+            $table->enum('action', ['APPROVED', 'REJECTED', 'SHIPPED', 'RECEIVED']);
             $table->text('remarks')->nullable();
             $table->timestamps();
         });

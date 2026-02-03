@@ -17,6 +17,20 @@ class FulfillmentController extends Controller
         abort_unless(auth()->user()->role === 'INVENTORY', 403);
 
         $req = RequestModel::findOrFail($id);
+        $user = auth()->user();
+        $role = strtoupper($user->role);
+
+         // Optional: ensure correct status
+        if ($req->status !== 'PENDING_INVENTORY') {
+            return response()->json([
+                'message' => 'Request is not ready for shipment'
+            ], 422);
+        }
+
+        // Optional status transition
+        $req->update([
+            'status' => 'SHIPPED',
+        ]);
 
         $validated = $request->validate([
             'remarks'=> 'nullable|string',
@@ -24,13 +38,6 @@ class FulfillmentController extends Controller
             'shipments.*.shipped_date' => ['required', 'date'],
             'shipments.*.tracking_link' => ['required', 'url'],
         ]);
-
-        // Optional: ensure correct status
-        if ($req->status !== 'PENDING_INVENTORY') {
-            return response()->json([
-                'message' => 'Request is not ready for shipment'
-            ], 422);
-        }
 
         foreach ($request->shipments as $shipment) {
             Shipment::create([
@@ -40,21 +47,22 @@ class FulfillmentController extends Controller
                 'shipped_date'  => $shipment['shipped_date'],
                 'received_date' => $shipment['received_date'] ?? null,
                 'tracking_link' => $shipment['tracking_link'],
-                'status' => 'SHIPPED'
+                'status' => $req->status
             ]);
         }
+        // ✅ Prefix remarks with role (only if remarks exist)
+        $formattedRemarks = "[{$role}]: " . (
+            $request->filled('remarks')
+                ? trim($request->remarks)
+                : 'No remarks provided'
+        );
 
-        // Optional status transition
-        $req->update([
-            'status' => 'SHIPPED',
+        Approval::create([
+            'request_id' => $req->id,
+            'approver_id' => auth()->id(),
+            'action' => $req->status,
+            'remarks' => $formattedRemarks
         ]);
-
-        // Approval::create([
-        //     'request_id' => $req->id,
-        //     'approver_id' => auth()->id(),
-        //     'action' => 'APPROVED',
-        //     'remarks' => $request->remarks
-        // ]);
 
         RequestStatusLog::create([
             'request_id' => $req->id,
@@ -75,6 +83,23 @@ class FulfillmentController extends Controller
         $req = RequestModel::findOrFail($id);
         $req->status = 'RECEIVED';
         $req->save();
+
+        $user = auth()->user();
+        $role = strtoupper($user->role);
+
+         // ✅ Prefix remarks with role (only if remarks exist)
+        $formattedRemarks = "[{$role}]: " . (
+            $request->filled('remarks')
+                ? trim($request->remarks)
+                : 'No remarks provided'
+        );
+
+        Approval::create([
+            'request_id' => $req->id,
+            'approver_id' => auth()->id(),
+            'action' => $req->status,
+            'remarks' => $formattedRemarks
+        ]);
 
         RequestStatusLog::create([
             'request_id' => $req->id,

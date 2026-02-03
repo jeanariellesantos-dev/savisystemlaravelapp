@@ -18,11 +18,14 @@ class ApprovalController extends Controller
     ]);
 
     $req = RequestModel::findOrFail($id);
-    $role = auth()->user()->role;
+    $user = auth()->user();
+    $role = strtoupper($user->role);
 
     $flow = [
         'ACCOUNTING' => 'PENDING_SUPERVISOR',
         'SUPERVISOR' => 'PENDING_INVENTORY',
+        'INVENTORY' => 'SHIPPED',
+        'OPERATION' => 'RECEIVED',
     ];
 
     if ($request->action === 'REJECTED') {
@@ -32,11 +35,18 @@ class ApprovalController extends Controller
         $req->status = $flow[$role];
     }
 
+    // ✅ Prefix remarks with role (only if remarks exist)
+    $formattedRemarks = "[{$role}]: " . (
+        $request->filled('remarks')
+            ? trim($request->remarks)
+            : 'No remarks provided'
+    );
+
     Approval::create([
         'request_id' => $req->id,
         'approver_id' => auth()->id(),
         'action' => $request->action,
-        'remarks' => $request->remarks
+        'remarks' => $formattedRemarks
     ]);
 
     RequestStatusLog::create([
