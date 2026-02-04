@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('role_name');
             $table->string('role_description');
+            $table->integer('is_active')->default(1);
             $table->timestamps();
         });
     }

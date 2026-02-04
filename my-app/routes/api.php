@@ -1,13 +1,15 @@
 <?php
 
 
-use App\Http\Controllers\Api\Request\ApprovalController;
-use App\Http\Controllers\Api\Request\FulfillmentController;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\Request\ApprovalController;
+use App\Http\Controllers\Api\Request\FulfillmentController;
 use App\Http\Controllers\Api\Request\RequestController;
 use App\Http\Controllers\Api\ShipmentController;
-
+use App\Http\Controllers\Api\DealershipController;
+use App\Http\Controllers\Api\RoleController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -28,6 +30,21 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/request/{id}/approve', [ApprovalController::class, 'approve']);
     Route::post('/request/{id}/fulfill', [FulfillmentController::class, 'fulfill']);
     Route::post('/request/{id}/receive', [FulfillmentController::class, 'receive']);
+
+    //Dealerships
+    Route::get('/dealerships', [DealershipController::class, 'index']);
+    Route::post('/dealerships', [DealershipController::class, 'store']);
+    Route::get('/dealerships/{id}', [DealershipController::class, 'show']);
+    Route::put('/dealerships/{id}', [DealershipController::class, 'update']);
+    Route::patch('/dealerships/{id}/deactivate', [DealershipController::class, 'deactivate']);
+    Route::delete('/dealerships/{id}', [DealershipController::class, 'destroy']);
+
+    //Roles
+    Route::get('/roles', [RoleController::class, 'index']);
+    Route::post('/roles', [RoleController::class, 'store']);
+    Route::get('/roles/{id}', [RoleController::class, 'show']);
+    Route::put('/roles/{id}', [RoleController::class, 'update']);
+    Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
 
 });
 
