@@ -6,14 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
 {
-    protected $fillable = [
-        'product_name',
-        'quantity',
-        'unit_of_measure'
-    ];
+    protected $fillable = ['category_id', 'product_name', 'description', 'is_active'];
 
-    public function requestItems()
+    public function category()
     {
-        return $this->hasMany(RequestItem::class);
+        return $this->belongsTo(Category::class);
+    }
+
+    public function units()
+    {
+        return $this->belongsToMany(Unit::class, 'product_units')
+            ->withPivot('is_default')
+            ->withTimestamps();
     }
 }
+

@@ -9,6 +9,7 @@ class RequestItem extends Model
     protected $fillable = [
         'request_id',
         'product_id',
+        'unit_id',
         'quantity',
         'starting_balance',
         'ending_balance'
@@ -22,5 +23,10 @@ class RequestItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+        public function unit()
+    {
+        return $this->belongsTo(Unit::class);
     }
 }

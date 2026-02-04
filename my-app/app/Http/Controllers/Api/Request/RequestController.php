@@ -59,6 +59,7 @@ public function store(AddRequest $request)
         'status' => 'required|string|max:255',
         'items' => 'required|array|min:1',
         'items.*.product_id' => 'required|exists:products,id',
+        'items.*.unit_id' => 'required|exists:units,id',
         'items.*.quantity' => 'required|integer|min:1',
     ]);
 
@@ -74,12 +75,15 @@ public function store(AddRequest $request)
         foreach ($validated['items'] as $item) {
             $product = Product::lockForUpdate()->findOrFail($item['product_id']);
 
-            $startingBalance = $product->quantity;
-            $endingBalance   = $startingBalance - $item['quantity'];
+            $startingBalance = 0;
+            $endingBalance   = 0;
 
-            if ($endingBalance < 0) {
-                throw new \Exception("Insufficient stock for {$product->product_name}");
-            }
+            // $startingBalance = $product->quantity;
+            // $endingBalance   = $startingBalance - $item['quantity'];
+
+            // if ($endingBalance < 0) {
+            //     throw new \Exception("Insufficient stock for {$product->product_name}");
+            // }
 
             $product->update([
                 'quantity' => $endingBalance,
@@ -87,6 +91,7 @@ public function store(AddRequest $request)
 
             $req->items()->create([
                 'product_id'       => $product->id,
+                'unit_id'         => $item['unit_id'],
                 'quantity'         => $item['quantity'],
                 'starting_balance' => $startingBalance,
                 'ending_balance'   => $endingBalance,
@@ -177,15 +182,26 @@ public function pending()
     $roleName = $user->role->role_name;
 
     if ($roleName === 'OPERATION') {
-        return RequestModel::where('requestor_id', $user->id)
-            ->with([
-                'requestor:id,firstname',
-                'items.product',
-                'approvals:id,request_id,remarks',
-                'shipments:id,request_id,shipped_date,tracking_link'
-            ])
-            ->orderBy('created_at', 'asc')
-            ->get();
+return RequestModel::where('requestor_id', $user->id)
+    ->with([
+        'requestor:id,firstname',
+
+        // Items → product + category + unit
+        'items' => function ($q) {
+            $q->select('id', 'request_id', 'product_id', 'unit_id', 'quantity')
+              ->with([
+                  'unit:id,name',
+                  'product:id,category_id,product_name',
+                  'product.category:id,name',
+              ]);
+        },
+
+        'approvals:id,request_id,remarks,created_at',
+        'shipments:id,request_id,shipped_date,tracking_link',
+    ])
+    ->orderBy('created_at', 'asc')
+    ->get();
+
     }
 
     $statusMap = [
@@ -199,12 +215,23 @@ public function pending()
     return RequestModel::where('status', $statusMap[$roleName])
         ->with([
             'requestor:id,firstname',
-            'items.product',
-            'approvals:id,request_id,remarks',
-            'shipments:id,request_id,shipped_date,tracking_link'
+
+            // Request items → unit + product + category
+            'items' => function ($q) {
+                $q->select('id', 'request_id', 'product_id', 'unit_id', 'quantity')
+                ->with([
+                    'unit:id,name',
+                    'product:id,category_id,product_name',
+                    'product.category:id,name',
+                ]);
+            },
+
+            'approvals:id,request_id,remarks,created_at',
+            'shipments:id,request_id,shipped_date,tracking_link',
         ])
         ->orderBy('created_at', 'asc')
         ->get();
+
 }
 
 

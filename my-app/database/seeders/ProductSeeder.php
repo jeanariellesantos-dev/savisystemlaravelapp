@@ -2,39 +2,37 @@
 
 namespace Database\Seeders;
 
-use App\Models\Product;
 use Illuminate\Database\Seeder;
+use App\Models\Product;
+use App\Models\Category;
 
 class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        Product::insert([
+        $chemicals = Category::where('slug', 'chemicals')->first();
+        $supplies  = Category::where('slug', 'supplies')->first();
+
+        Product::firstOrCreate(
             [
-                'product_name' => 'Laptop',
-                'quantity' => 100,
-                'unit_of_measure' => 'pcs',
-                'is_active' => '1',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'product_name' => 'Rustproofing',
+                'category_id' => $chemicals->id,
             ],
             [
-                'product_name' => 'Mouse',
-                'quantity' => 200,
-                'unit_of_measure' => 'pcs',
-                'is_active' => '1',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'description' => 'Anti-rust chemical treatment',
+                'is_active' => true,
+            ]
+        );
+
+        Product::firstOrCreate(
+            [
+                'product_name' => 'Car Soap',
+                'category_id' => $supplies->id,
             ],
             [
-                'product_name' => 'Keyboard',
-                'quantity' => 150,
-                'is_active' => '1',
-                'unit_of_measure' => 'pcs',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+                'description' => 'Car wash cleaning solution',
+                'is_active' => true,
+            ]
+        );
     }
 }
-

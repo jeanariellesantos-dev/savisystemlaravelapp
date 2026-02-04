@@ -8,8 +8,12 @@ use App\Http\Controllers\Api\Request\ApprovalController;
 use App\Http\Controllers\Api\Request\FulfillmentController;
 use App\Http\Controllers\Api\Request\RequestController;
 use App\Http\Controllers\Api\ShipmentController;
-use App\Http\Controllers\Api\DealershipController;
+use App\Http\Controllers\Api\Dealer;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ProductController;
+
+
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -46,7 +50,12 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/roles/{id}', [RoleController::class, 'update']);
     Route::delete('/roles/{id}', [RoleController::class, 'destroy']);
 
-});
+//Product and Category
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/{id}/units', [ProductController::class, 'units']);
+
+    });
 
 //Shipment
 Route::prefix('shipment')->group(function () {

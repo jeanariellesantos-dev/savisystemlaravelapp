@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('request_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('unit_id')->constrained()->cascadeOnDelete();
             $table->integer('quantity');
             $table->integer('starting_balance');
             $table->integer('ending_balance');
