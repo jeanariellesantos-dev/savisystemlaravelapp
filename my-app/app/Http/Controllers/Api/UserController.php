@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StoreUserRequest;
 use App\Customs\Services\EmailVerificationService;
 use App\Models\User;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -117,6 +118,55 @@ class UserController extends Controller
     }
 
 
+        public function update(Request $request)
+    {
+
+        $user = auth()->user();
+
+        $data = $request->validate([
+            'firstname' => 'required|string',
+            'lastname'  => 'required|string',
+            'email'     => 'required|email',
+            'mobile'    => 'nullable|string',
+        ]);
+
+        $user->update($data);
+
+        return response()->json($user);
+
+    }
+
+    public function updateEmail(Request $request)
+{
+    $user = auth()->user();
+
+    $data = $request->validate([
+        'email' => [
+            'required',
+            'email',
+            Rule::unique('users', 'email')->ignore($user->id),
+        ],
+    ]);
+
+    // Update email
+    $user->email = $data['email'];
+
+    // If you use email verification, reset status
+    if ($user->email !== $data['email']) {
+        $user->email_verified_at = null;
+    }
+
+    $user->save();
+
+    // OPTIONAL: send verification email again
+    // $this->service->sendVerificationLink($user);
+
+    return response()->json([
+        'status' => 'success',
+        'email' => $user->email,
+        'message' => 'Email updated successfully',
+    ]);
+}
 
 
 }
