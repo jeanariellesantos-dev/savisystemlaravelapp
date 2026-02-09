@@ -12,6 +12,8 @@ use App\Http\Requests\StoreUserRequest;
 use App\Customs\Services\EmailVerificationService;
 use App\Models\User;
 use Illuminate\Validation\Rule;
+use Laravel\Pail\ValueObjects\Origin\Console;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -48,6 +50,7 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request)
     {
+    
         if ($request->validated()) {
             $user = User::create($request->validated());
 
@@ -67,7 +70,7 @@ class UserController extends Controller
 
             }
 
-            //  return response()->json(["message" => "account created succesfully"]);
+             return response()->json(["message" => "account created succesfully"]);
 
         }
 

@@ -20,7 +20,7 @@ class RequestController extends Controller
     //
     public function index(Request $request)
     {
-        $query = RequestModel::with('requestItems.product');
+        $query = RequestModel::with('items');
 
         // 🔍 Search filter
         if ($request->filled('search')) {
@@ -181,29 +181,34 @@ public function pending()
     $user = auth()->user();
     $roleName = $user->role->role_name;
 
+    $query = RequestModel::query()
+        ->with([
+            'requestor:id,firstname',
+
+            'items' => function ($q) {
+                $q->select('id', 'request_id', 'product_id', 'unit_id', 'quantity')
+                  ->with([
+                      'unit:id,name',
+                      'product:id,category_id,product_name',
+                      'product.category:id,name',
+                  ]);
+            },
+
+            'approvals:id,request_id,remarks,created_at',
+            'shipments:id,request_id,shipped_date,tracking_link',
+        ]);
+
+    // OPERATION VIEW
     if ($roleName === 'OPERATION') {
-return RequestModel::where('requestor_id', $user->id)
-    ->with([
-        'requestor:id,firstname',
+        $query->where('requestor_id', $user->id)
+              ->whereNotIn('status', ['RECEIVED', 'CANCELLED', 'REJECTED']);
 
-        // Items → product + category + unit
-        'items' => function ($q) {
-            $q->select('id', 'request_id', 'product_id', 'unit_id', 'quantity')
-              ->with([
-                  'unit:id,name',
-                  'product:id,category_id,product_name',
-                  'product.category:id,name',
-              ]);
-        },
-
-        'approvals:id,request_id,remarks,created_at',
-        'shipments:id,request_id,shipped_date,tracking_link',
-    ])
-    ->orderBy('created_at', 'asc')
-    ->get();
-
+        return $query
+            ->orderBy('updated_at', 'desc')
+            ->paginate(8);
     }
 
+    // APPROVAL ROLES
     $statusMap = [
         'ACCOUNTING' => 'PENDING_ACCOUNTING',
         'SUPERVISOR' => 'PENDING_SUPERVISOR',
@@ -212,27 +217,13 @@ return RequestModel::where('requestor_id', $user->id)
 
     abort_unless(isset($statusMap[$roleName]), 403);
 
-    return RequestModel::where('status', $statusMap[$roleName])
-        ->with([
-            'requestor:id,firstname',
+    $query->where('status', $statusMap[$roleName]);
 
-            // Request items → unit + product + category
-            'items' => function ($q) {
-                $q->select('id', 'request_id', 'product_id', 'unit_id', 'quantity')
-                ->with([
-                    'unit:id,name',
-                    'product:id,category_id,product_name',
-                    'product.category:id,name',
-                ]);
-            },
-
-            'approvals:id,request_id,remarks,created_at',
-            'shipments:id,request_id,shipped_date,tracking_link',
-        ])
-        ->orderBy('created_at', 'asc')
-        ->get();
-
+    return $query
+        ->orderBy('updated_at', 'desc')
+        ->paginate(8);
 }
+
 
 
 
