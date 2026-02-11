@@ -224,6 +224,29 @@ public function pending()
         ->paginate(8);
 }
 
+public function history()
+{
+    $user = auth()->user();
+
+return RequestModel::whereHas('approvals', function ($q) use ($user) {
+        $q->where('approver_id', $user->id);
+    })
+    ->with([
+        'requestor:id,firstname',
+        'items.unit:id,name',
+        'items.product:id,category_id,product_name',
+        'items.product.category:id,name',
+
+        // RETURN ALL APPROVALS
+        'approvals:id,request_id,approver_id,remarks,created_at',
+
+        'shipments:id,request_id,shipped_date,tracking_link'
+    ])
+    ->latest()
+    ->paginate(10);
+
+}
+
 
 
 
