@@ -39,17 +39,17 @@ class ProductController extends Controller
  // GET /api/products/{id}/units
 
     public function units($id)
-{
-    $product = Product::with('units:id,name,abbreviation')
-        ->findOrFail($id);
+        {
+            $product = Product::with('units:id,name,abbreviation')
+                ->findOrFail($id);
 
-    return response()->json(
-        $product->units->map(fn ($unit) => [
-            'id'   => $unit->id,
-            'name' => $unit->name,
-        ])
-    );
-}
+            return response()->json(
+                $product->units->map(fn ($unit) => [
+                    'id'   => $unit->id,
+                    'name' => $unit->name,
+                ])
+            );
+        }
 
 
 }

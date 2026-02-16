@@ -1,7 +1,5 @@
 <?php
 
-
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Request\ApprovalController;
@@ -13,10 +11,11 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\DealershipController;
 use App\Http\Controllers\Api\ProductController;
 
+use App\Http\Controllers\Api\Admin\UserController;
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
-
 
 Route::middleware('auth:api')->group(function () {
 
@@ -53,15 +52,17 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}/units', [ProductController::class, 'units']);
+    //Shipment
+    Route::prefix('shipment')->group(function () {
+        Route::get('/', [ShipmentController::class, 'index']);          // list
+        Route::post('/', [ShipmentController::class, 'store']);         // create
+        Route::patch('{id}/status', [ShipmentController::class, 'updateStatus']);
+        Route::delete('{id}', [ShipmentController::class, 'destroy']);
 
     });
 
-//Shipment
-Route::prefix('shipment')->group(function () {
-    Route::get('/', [ShipmentController::class, 'index']);          // list
-    Route::post('/', [ShipmentController::class, 'store']);         // create
-    Route::patch('{id}/status', [ShipmentController::class, 'updateStatus']);
-    Route::delete('{id}', [ShipmentController::class, 'destroy']);
-});
+
+    });
 
 require __DIR__ . '/auth.php';
+require __DIR__.'/admin.php';

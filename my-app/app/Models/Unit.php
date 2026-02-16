@@ -12,6 +12,8 @@ class Unit extends Model
     {
         return $this->belongsToMany(Product::class, 'product_units');
     }
+
+    
 }
 
 
