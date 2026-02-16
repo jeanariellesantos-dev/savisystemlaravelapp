@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\UnitController;
+use App\Http\Controllers\Api\Admin\DealershipController;
 
 Route::middleware('auth:api')->group(function () {
 
@@ -36,6 +37,13 @@ Route::middleware('auth:api')->group(function () {
                 Route::put('units/{unit}', [UnitController::class, 'update']);
                 Route::delete('units/{unit}', [UnitController::class, 'destroy']);
                 Route::patch('units/{unit}/toggle', [UnitController::class, 'toggle']);
+
+                Route::get('dealerships', [DealershipController::class, 'index']);
+                Route::post('dealerships', [DealershipController::class, 'store']);
+                Route::get('dealerships/{id}', [DealershipController::class, 'show']);
+                Route::put('dealerships/{id}', [DealershipController::class, 'update']);
+                Route::patch('dealerships/{id}/toggle', [DealershipController::class, 'toggleStatus']);
+                Route::delete('dealerships/{id}', [DealershipController::class, 'destroy']); // optional
 
     });
 
