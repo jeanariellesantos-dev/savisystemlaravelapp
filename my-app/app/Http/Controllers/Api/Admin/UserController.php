@@ -15,7 +15,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with('role')
-            ->select('id','firstname','lastname','email','is_active','role_id')
+            ->select('id','firstname','lastname','email','mobile','is_active','role_id')
             ->get();
 
         return response()->json(
@@ -25,6 +25,7 @@ class UserController extends Controller
                     'firstname' => $user->firstname,
                     'lastname' => $user->lastname,
                     'email' => $user->email,
+                    'mobile' => $user->mobile,
                     'role_id' => $user->role_id,
                     'role' => $user->role?->role_name ?? null,
                     'is_active' => $user->is_active,

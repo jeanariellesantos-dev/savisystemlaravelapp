@@ -22,18 +22,29 @@ class ProductController extends Controller
 
     /* ================= STORE ================= */
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'product_name' => 'required|string|max:255',
-            'category_id'  => 'required|exists:categories,id',
-            'unit_id'      => 'required|exists:units,id',
-        ]);
+        public function store(Request $request)
+        {
+            $validated = $request->validate([
+                'product_name' => 'required|string|max:255',
+                'category_id'  => 'required|exists:categories,id',
+                'unit_ids'     => 'nullable|array',
+                'unit_ids.*'   => 'exists:units,id',
+            ]);
 
-        $product = Product::create($validated);
+            $product = Product::create([
+                'product_name' => $validated['product_name'],
+                'category_id'  => $validated['category_id'],
+                'is_active'    => true,
+            ]);
 
-        return response()->json($product->load(['category', 'units']), 201);
-    }
+            // Attach units
+            if (!empty($validated['unit_ids'])) {
+                $product->units()->attach($validated['unit_ids']);
+            }
+
+            return response()->json($product->load('category', 'units'), 201);
+        }
+
 
     /* ================= SHOW ================= */
 
@@ -49,22 +60,25 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'product_name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('products')->ignore($product->id),
-            ],
+            'product_name' => 'required|string|max:255',
             'category_id'  => 'required|exists:categories,id',
-            'unit_id'      => 'required|exists:units,id',
+            'unit_ids'     => 'nullable|array',
+            'unit_ids.*'   => 'exists:units,id',
         ]);
 
-        $product->update($validated);
+        $product->update([
+            'product_name' => $validated['product_name'],
+            'category_id'  => $validated['category_id'],
+        ]);
+
+        // Sync units (important)
+        $product->units()->sync($validated['unit_ids'] ?? []);
 
         return response()->json(
-            $product->load(['category', 'units'])
+            $product->load('category', 'units')
         );
     }
+
 
     /* ================= DELETE ================= */
 
@@ -91,16 +105,16 @@ class ProductController extends Controller
     }
 
 
-        public function units($id)
-        {
-            $product = Product::with('units:id,name,abbreviation')
-                ->findOrFail($id);
+    public function units($id)
+    {
+        $product = Product::with('units:id,name,abbreviation')
+            ->findOrFail($id);
 
-            return response()->json(
-                $product->units->map(fn ($unit) => [
-                    'id'   => $unit->id,
-                    'name' => $unit->name,
-                ])
-            );
-        }
+        return response()->json(
+            $product->units->map(fn ($unit) => [
+                'id'   => $unit->id,
+                'name' => $unit->name,
+            ])
+        );
+    }
 }

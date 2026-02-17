@@ -25,10 +25,12 @@ class UnitController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:units,name',
+            'abbreviation'=>'required|string|max:255|unique:units,abbreviation',
         ]);
 
         $unit = Unit::create([
             'name' => $validated['name'],
+            'abbreviation'=> $validated['abbreviation'],
             'is_active' => true,
         ]);
 
@@ -42,10 +44,12 @@ class UnitController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:units,name,' . $unit->id,
+            'abbreviation'=>'required|string|max:255|unique:units,abbreviation' . $unit->abbreviation,
         ]);
 
         $unit->update([
             'name' => $validated['name'],
+            'abbreviation'=> $validated['abbreviation'],
         ]);
 
         return response()->json($unit);
