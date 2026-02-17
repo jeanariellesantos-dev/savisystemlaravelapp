@@ -227,24 +227,37 @@ public function pending()
 public function history()
 {
     $user = auth()->user();
+    $roleName = $user->role->role_name;
 
-return RequestModel::whereHas('approvals', function ($q) use ($user) {
-        $q->where('approver_id', $user->id);
-    })
-    ->with([
+    $query = RequestModel::with([
         'requestor:id,firstname',
         'items.unit:id,name',
         'items.product:id,category_id,product_name',
         'items.product.category:id,name',
-
-        // RETURN ALL APPROVALS
         'approvals:id,request_id,approver_id,remarks,created_at',
-
         'shipments:id,request_id,shipped_date,tracking_link'
-    ])
-    ->latest()
-    ->paginate(10);
+    ]);
 
+    // ================= OPERATION =================
+    if ($roleName === 'OPERATION') {
+        return $query
+            ->where('requestor_id', $user->id)
+            ->whereIn('status', [
+                'RECEIVED',
+                'CANCELLED',
+                'REJECTED'
+            ])
+            ->latest()
+            ->paginate(10);
+    }
+
+    // ================= APPROVAL ROLES =================
+    return $query
+        ->whereHas('approvals', function ($q) use ($user) {
+            $q->where('approver_id', $user->id);
+        })
+        ->latest()
+        ->paginate(10);
 }
 
 

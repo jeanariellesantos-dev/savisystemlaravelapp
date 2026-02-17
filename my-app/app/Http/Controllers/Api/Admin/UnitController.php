@@ -43,8 +43,8 @@ class UnitController extends Controller
     public function update(Request $request, Unit $unit)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:units,name,' . $unit->id,
-            'abbreviation'=>'required|string|max:255|unique:units,abbreviation' . $unit->abbreviation,
+            'name' => 'required|string|max:255|unique:units,name',
+            'abbreviation'=>'required|string|max:255|unique:units,abbreviation',
         ]);
 
         $unit->update([
