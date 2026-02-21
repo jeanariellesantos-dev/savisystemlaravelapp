@@ -31,6 +31,10 @@ class RoleSeeder extends Seeder
                 'role_description' => 'Supervisor',
             ],
             [
+                'role_name' => 'CLUSTER_HEAD',
+                'role_description' => 'Cluster Head',
+            ],
+            [
                 'role_name' => 'INVENTORY',
                 'role_description' => 'Inventory Staff',
             ],

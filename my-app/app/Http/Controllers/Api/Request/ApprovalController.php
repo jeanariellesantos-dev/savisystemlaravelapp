@@ -24,7 +24,8 @@ class ApprovalController extends Controller
 
     $flow = [
         'ACCOUNTING' => 'PENDING_SUPERVISOR',
-        'SUPERVISOR' => 'PENDING_INVENTORY',
+        'SUPERVISOR' => 'PENDING_CLUSTER_HEAD',
+        'CLUSTER_HEAD' => 'PENDING_INVENTORY',
         'INVENTORY' => 'SHIPPED',
         'OPERATION' => 'RECEIVED',
     ];

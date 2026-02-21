@@ -53,10 +53,19 @@ class UserSeeder extends Seeder
             'email' => 'supervisor@example.com',
         ],
         [
+            'firstname' => 'Kate',
+            'lastname' => 'Katigbak',
+            'password' => 'pass123',
+            'role_id' => '5', // CLUSTER_HEAD
+            'dealership_id'=> '1',
+            'mobile' => '+639165097848',
+            'email' => 'clusterhead@example.com',
+        ],
+        [
             'firstname' => 'Kessiah',
             'lastname' => 'Katigbak',
             'password' => 'pass123',
-            'role_id' => '5', // INVENTORY
+            'role_id' => '6', // INVENTORY
             'dealership_id'=> '1',
             'mobile' => '+639165097848',
             'email' => 'inventory@example.com',

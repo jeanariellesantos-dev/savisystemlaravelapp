@@ -212,6 +212,7 @@ public function pending()
     $statusMap = [
         'ACCOUNTING' => 'PENDING_ACCOUNTING',
         'SUPERVISOR' => 'PENDING_SUPERVISOR',
+        'CLUSTER_HEAD' => 'PENDING_CLUSTER_HEAD',
         'INVENTORY' => 'PENDING_INVENTORY'
     ];
 

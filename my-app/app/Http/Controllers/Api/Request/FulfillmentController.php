@@ -39,7 +39,7 @@ class FulfillmentController extends Controller
             'remarks'=> 'nullable|string',
             'shipments' => ['required', 'array', 'min:1'],
             'shipments.*.shipped_date' => ['required', 'date'],
-            'shipments.*.tracking_link' => ['required', 'url'],
+            'shipments.*.tracking_link' => ['nullable', 'url'],
         ]);
 
         foreach ($request->shipments as $shipment) {
