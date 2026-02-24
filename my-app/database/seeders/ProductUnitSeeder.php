@@ -74,7 +74,7 @@ class ProductUnitSeeder extends Seeder
             'Stabilo'                    => ['Piece', 'Pad'],
             'Pentel Pen'                 => ['Piece', 'Pad'],
             'AR - Double'                => ['Piece', 'Pad'],
-            'A4 - Triple'                => ['Piece', 'Pad'],
+            'AR - Triple'                => ['Piece', 'Pad'],
             'Daily Production Report'    => ['Piece', 'Pad'],
             'Weekly Production Report'   => ['Piece', 'Pad'],
             'Service Invoice'            => ['Piece', 'Pad'],
@@ -112,8 +112,8 @@ class ProductUnitSeeder extends Seeder
             'Carbon Brush 100/101'    => ['Piece', 'Pair'],
 
             // ---------------- LOW PRESSURE GUN ----------------
-            'Low Pressure Gun'        => ['Piece', 'Pair'],
-            'Repair Kit (Set)'        => ['Piece', 'Pair'],
+            'Hose For Low Pressure Gun' => ['Piece', 'Pair'],
+            'Repair Kit (Set)'          => ['Piece', 'Pair'],
 
             // ---------------- GRACO ----------------
             'Rubber Washer Coupler'   => ['Piece', 'Pair'],

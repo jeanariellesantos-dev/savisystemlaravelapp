@@ -84,7 +84,7 @@ class ProductSeeder extends Seeder
                 'Stabilo',
                 'Pentel Pen',
                 'AR - Double',
-                'A4 - Triple',
+                'AR - Triple',
                 'Daily Production Report',
                 'Weekly Production Report',
                 'Service Invoice',
@@ -128,7 +128,7 @@ class ProductSeeder extends Seeder
             ],
 
             'Low Pressure Gun' => [
-                'Hose For Low Pressure Gum',
+                'Hose For Low Pressure Gun',
                 'Repair Kit (Set)',
             ],
 
