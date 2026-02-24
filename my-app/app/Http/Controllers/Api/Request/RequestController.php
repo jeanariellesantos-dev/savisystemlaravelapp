@@ -195,7 +195,7 @@ public function pending()
             },
 
             'approvals:id,request_id,remarks,created_at',
-            'shipments:id,request_id,shipped_date,tracking_link',
+            'shipments:id,request_id,shipped_date,received_date,tracking_link',
         ]);
 
     // OPERATION VIEW
@@ -236,7 +236,7 @@ public function history()
         'items.product:id,category_id,product_name',
         'items.product.category:id,name',
         'approvals:id,request_id,approver_id,remarks,created_at',
-        'shipments:id,request_id,shipped_date,tracking_link'
+        'shipments:id,request_id,shipped_date,received_date,tracking_link'
     ]);
 
     // ================= OPERATION =================

@@ -15,19 +15,19 @@ class RequestItemSeeder extends Seeder
     {
         DB::transaction(function () {
 
-            $request1 = Request::where('request_id', 'REQ-001')->firstOrFail();
-            $request2 = Request::where('request_id', 'REQ-002')->firstOrFail();
+            $request1 = Request::where('request_id', 'REQ2026022111011043')->firstOrFail();
+            $request2 = Request::where('request_id', 'REQ2026022111101322')->firstOrFail();
 
             // Products
-            $rustproofing = Product::where('product_name', 'Rustproofing')->firstOrFail();
-            $carSoap      = Product::where('product_name', 'Car Soap')->firstOrFail();
+            $rustproofing = Product::where('product_name', 'UBC')->firstOrFail();
+            $kerosene      = Product::where('product_name', 'Kerosene')->firstOrFail();
 
             // Units (via pivot default)
             $rustproofingUnit = $rustproofing->units()
                 ->wherePivot('is_default', true)
                 ->firstOrFail();
 
-            $carSoapUnit = $carSoap->units()
+            $keroseneUnit = $kerosene->units()
                 ->wherePivot('is_default', true)
                 ->firstOrFail();
 
@@ -44,8 +44,8 @@ class RequestItemSeeder extends Seeder
             // Request 1 - Car Soap
             RequestItem::create([
                 'request_id' => $request1->id,
-                'product_id' => $carSoap->id,
-                'unit_id'    => $carSoapUnit->id,
+                'product_id' => $kerosene->id,
+                'unit_id'    => $keroseneUnit->id,
                 'quantity'   => 5,
                 'starting_balance' => 4,
                 'ending_balance' => 2,

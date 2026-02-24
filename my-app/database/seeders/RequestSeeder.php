@@ -11,13 +11,13 @@ class RequestSeeder extends Seeder
     {
         Request::insert([
             [
-                'request_id' => 'REQ-001',
+                'request_id' => 'REQ2026022111011043',
                 'requestor_id' => "2",
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'request_id' => 'REQ-002',
+                'request_id' => 'REQ2026022111101322',
                 'requestor_id' => "2",
                 'created_at' => now(),
                 'updated_at' => now(),

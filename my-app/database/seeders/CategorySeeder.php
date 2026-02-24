@@ -14,10 +14,27 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
+
+        
+        // -------------------------
+        // CATEGORIES
+        // -------------------------
         $categories = [
-            'Chemicals',
-            'Supplies',
-            'Services',
+            'Rustproofing I',
+            'Common Materials / Detailing',
+            'Limited Disinfection',
+            'Washing',
+            'Rustproofing II',
+            'Detailing',
+            'Supplies - Detailing',
+            'Office Supplies',
+            'Vacuum',
+            'Uniform Supplies',
+            'Power Wash',
+            'Foam Wash Machine',
+            'Buffing Machine',
+            'Low Pressure Gun',
+            'Graco Pump',
         ];
 
         foreach ($categories as $name) {
