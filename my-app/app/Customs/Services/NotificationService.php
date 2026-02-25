@@ -4,7 +4,6 @@ namespace App\Customs\Services;
 
 use App\Models\User;
 use App\Models\Notification;
-use App\Events\RequestNotificationEvent;
 
 class NotificationService
 {
@@ -64,9 +63,6 @@ class NotificationService
                 'message'    => $message,
             ]);
 
-            broadcast(
-                new RequestNotificationEvent($notif)
-            )->toOthers();
         }
     }
     private function roleText(string $role): string
