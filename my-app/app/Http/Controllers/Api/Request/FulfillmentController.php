@@ -9,9 +9,17 @@ use App\Models\Approval;
 use App\Models\Request as RequestModel;
 use App\Models\RequestStatusLog;
 use Illuminate\Support\Facades\DB;
+use App\Customs\Services\NotificationService;
 
 class FulfillmentController extends Controller
 {
+        protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+    //
     public function fulfill(Request $request, $id)
     {
         $user = auth()->user();
@@ -71,7 +79,14 @@ class FulfillmentController extends Controller
             'request_id' => $req->id,
             'updated_by' => auth()->id(),
             'status' => $req->status
-         ]);    
+         ]);   
+         
+        $this->notificationService->notifyRoleStatus(
+            'OPERATION',
+            $req->id,
+            'INVENTORY',
+            'SHIPPED'
+        );
 
         return response()->json([
             'message' => 'Order has been shipped',
@@ -109,7 +124,14 @@ class FulfillmentController extends Controller
             'request_id' => $req->id,
             'updated_by' => auth()->id(),
             'status' => $req->status
-         ]);   
+         ]);
+         
+        $this->notificationService->notifyRoleStatus(
+            'INVENTORY',
+            $req->id,
+            'OPERATION',
+            'RECEIVED'
+        );
          
         DB::transaction(function () use ($req) {
 

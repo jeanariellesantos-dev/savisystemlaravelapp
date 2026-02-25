@@ -14,9 +14,16 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Customs\Services\NotificationService;
 
 class RequestController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     //
     public function index(Request $request)
     {
@@ -104,6 +111,14 @@ public function store(AddRequest $request)
             'updated_by' => $user->id,
             'status'     => $req->status,
         ]);
+
+        $this->notificationService->notifyRoleStatus(
+            'ACCOUNTING',
+            $req->id,
+            'ACCOUNTING',
+            'PENDING'
+        );
+
     });
 
     // ✅ Return the CREATED request (NOT the HTTP request object)
@@ -260,6 +275,8 @@ public function history()
         ->latest()
         ->paginate(10);
 }
+
+
 
 
 

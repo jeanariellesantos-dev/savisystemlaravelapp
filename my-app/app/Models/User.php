@@ -85,5 +85,9 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->belongsTo(Dealership::class, 'dealership_id');
     }
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id');
+    }
 
 }

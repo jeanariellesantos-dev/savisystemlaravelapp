@@ -7,9 +7,18 @@ use Illuminate\Http\Request;
 use App\Models\Approval;
 use App\Models\Request as RequestModel;
 use App\Models\RequestStatusLog;
+use App\Customs\Services\NotificationService;
 
 class ApprovalController extends Controller
 {
+
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function approve(Request $request, $id)
 {
     $request->validate([
@@ -58,8 +67,48 @@ class ApprovalController extends Controller
         'status' => $req->status
     ]);
 
+
+    // 🔔 NOTIFICATIONS
+    if ($req->status === 'REJECTED') {
+
+        // rejected always goes back to OPERATION
+        $this->notificationService->notifyRoleStatus(
+            'OPERATION',
+            $req->id,
+            $role,
+            'REJECTED'
+        );
+
+    } else {
+
+        $nextRole = $this->getNextRoleFromStatus($req->status);
+
+        if ($nextRole) {
+            $this->notificationService->notifyRoleStatus(
+                $nextRole,
+                $req->id,
+                $role,
+                'PENDING'
+            );
+        }
+    }
+
     $req->save();
 
     return response()->json(['message' => 'Action completed']);
 }
+
+private function getNextRoleFromStatus(string $status): ?string
+{
+    if (str_starts_with($status, 'PENDING_')) {
+        return str_replace('PENDING_', '', $status);
+    }
+
+    return match ($status) {
+        'SHIPPED'  => 'OPERATION',
+        'RECEIVED' => 'INVENTORY',
+        default    => null,
+    };
+}
+
 }

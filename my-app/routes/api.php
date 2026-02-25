@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\DealershipController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\NotificationController;
 
 use App\Http\Controllers\Api\Admin\UserController;
 
@@ -61,6 +62,14 @@ Route::middleware('auth:api')->group(function () {
 
     });
 
+    Route::prefix('notifications')->group(function () {
+
+        Route::get('/', [NotificationController::class,'index']);
+        Route::get('/unread-count', [NotificationController::class,'unreadCount']);
+        Route::patch('{id}/read', [NotificationController::class,'markAsRead']);
+        Route::patch('read-all', [NotificationController::class,'markAllAsRead']);
+
+    });
 
     });
 
