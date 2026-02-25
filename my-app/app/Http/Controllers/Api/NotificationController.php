@@ -71,7 +71,6 @@ public function index()
     public function markAllAsRead()
     {
         Notification::where('user_id', auth()->id())
-            ->whereNull('read_at')
             ->update([
                 'is_read' => 1,
             ]);
