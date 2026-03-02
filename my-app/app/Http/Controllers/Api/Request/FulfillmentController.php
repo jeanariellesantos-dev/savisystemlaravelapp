@@ -30,7 +30,6 @@ class FulfillmentController extends Controller
 
         $req = RequestModel::findOrFail($id);
 
-
          // Optional: ensure correct status
         if ($req->status !== 'PENDING_INVENTORY') {
             return response()->json([
@@ -47,7 +46,7 @@ class FulfillmentController extends Controller
             'remarks'=> 'nullable|string',
             'shipments' => ['required', 'array', 'min:1'],
             'shipments.*.shipped_date' => ['required', 'date'],
-            'shipments.*.tracking_link' => ['nullable', 'url'],
+            'shipments.*.tracking_link' => ['nullable', 'string'],
         ]);
 
         foreach ($request->shipments as $shipment) {
