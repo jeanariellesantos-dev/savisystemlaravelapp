@@ -15,8 +15,15 @@ class DashboardController extends Controller
         $this->applyDateFilter($query, $request, 'requests.created_at');
 
         $stats = $query->selectRaw("
-            SUM(CASE WHEN status LIKE 'PENDING_%' THEN 1 ELSE 0 END) as pending,
-            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+            SUM(CASE 
+                WHEN status IN (
+                    'PENDING_ACCOUNTING',
+                    'PENDING_SUPERVISOR',
+                    'PENDING_CLUSTER_HEAD'
+                )
+                THEN 1 ELSE 0 END) as pending,
+
+            SUM(CASE WHEN status = 'PENDING_INVENTORY' THEN 1 ELSE 0 END) as approved,
             SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
             SUM(CASE WHEN status = 'shipped' THEN 1 ELSE 0 END) as shipped,
             SUM(CASE WHEN status = 'received' THEN 1 ELSE 0 END) as received
