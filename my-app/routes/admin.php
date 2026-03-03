@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Admin\DealershipController;
 use App\Http\Controllers\Api\Admin\RoleController;
+use App\Http\Controllers\Api\Admin\DashboardController;
 
 Route::middleware('auth:api')->group(function () {
 
@@ -56,6 +57,13 @@ Route::middleware('auth:api')->group(function () {
 
                 // Optional hard delete
                 Route::delete('roles/{id}', [RoleController::class, 'destroy']);
+
+                // Dashboard APIs
+                Route::get('/dashboard/request-status', [DashboardController::class, 'requestStatusFigures']);
+                Route::get('/dashboard/most-ordered-products', [DashboardController::class, 'mostOrderedProducts']);
+                Route::get('/dashboard/monthly-requests', [DashboardController::class, 'monthlyRequests']);
+                Route::get('/dashboard/avg-approval-time', [DashboardController::class, 'avgApprovalTime']);
+                Route::get('/dashboard/delivery-lead-time', [DashboardController::class, 'deliveryLeadTime']);
 
     });
 
