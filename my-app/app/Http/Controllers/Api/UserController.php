@@ -11,6 +11,11 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StoreUserRequest;
 use App\Customs\Services\EmailVerificationService;
 use App\Models\User;
+use Illuminate\Validation\Rule;
+use Laravel\Pail\ValueObjects\Origin\Console;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Hash;
+use App\Models\Role;
 
 class UserController extends Controller
 {
@@ -35,14 +40,25 @@ class UserController extends Controller
 
     }
 
+    public function logout()
+    {
+        Auth()->logout();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'User has been logged out',
+        ]);
+    }
+
     public function store(StoreUserRequest $request)
     {
+    
         if ($request->validated()) {
             $user = User::create($request->validated());
 
             if ($user) {
 
-                $this->service->sendVerificationLink($user);
+            //    $this->service->sendVerificationLink($user);
 
                 $token = auth()->login($user);
                 return $this->responseWithToken($token, $user);
@@ -56,7 +72,7 @@ class UserController extends Controller
 
             }
 
-            //  return response()->json(["message" => "account created succesfully"]);
+             return response()->json(["message" => "account created succesfully"]);
 
         }
 
@@ -64,12 +80,30 @@ class UserController extends Controller
 
     public function responseWithToken($token, $user)
     {
-        return response()->json([
-            'status' => 'success',
-            'user' => $user,
-            'access_token' => $token,
-            'type' => 'bearer',
-        ]);
+    $user->load('role');
+
+    return response()->json([
+        'status' => 'success',
+        'user' => [
+            'id' => $user->id,
+            'firstname' => $user->firstname,
+            'lastname' => $user->lastname,
+            'email' => $user->email,
+            'mobile' => $user->mobile,
+            'role' => $user->role?->role_name,
+            'role_description' => $user->role?->role_description, 
+        ],
+        'token' => $token,
+        'type' => 'bearer',
+        ])->cookie(
+            'token',
+            $token,
+            60,     // minutes
+            '/',
+            'localhost',
+            false,  // secure
+            true    // HttpOnly
+        );
 
     }
 
@@ -89,6 +123,55 @@ class UserController extends Controller
     }
 
 
+        public function update(Request $request)
+    {
+
+        $user = auth()->user();
+
+        $data = $request->validate([
+            'firstname' => 'required|string',
+            'lastname'  => 'required|string',
+            'email'     => 'required|email',
+            'mobile'    => 'nullable|string',
+        ]);
+
+        $user->update($data);
+
+        return response()->json($user);
+
+    }
+
+    public function updateEmail(Request $request)
+{
+    $user = auth()->user();
+
+    $data = $request->validate([
+        'email' => [
+            'required',
+            'email',
+            Rule::unique('users', 'email')->ignore($user->id),
+        ],
+    ]);
+
+    // Update email
+    $user->email = $data['email'];
+
+    // If you use email verification, reset status
+    if ($user->email !== $data['email']) {
+        $user->email_verified_at = null;
+    }
+
+    $user->save();
+
+    // OPTIONAL: send verification email again
+    // $this->service->sendVerificationLink($user);
+
+    return response()->json([
+        'status' => 'success',
+        'email' => $user->email,
+        'message' => 'Email updated successfully',
+    ]);
+}
 
 
 }
