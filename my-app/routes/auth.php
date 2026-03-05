@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\api\Profile\PasswordController;
+use App\Http\Controllers\Api\Profile\PasswordController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
