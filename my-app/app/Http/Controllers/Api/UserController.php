@@ -86,6 +86,7 @@ class UserController extends Controller
         'status' => 'success',
         'user' => [
             'id' => $user->id,
+            'employee_number' => $user->employee_number,
             'firstname' => $user->firstname,
             'lastname' => $user->lastname,
             'email' => $user->email,
@@ -123,15 +124,16 @@ class UserController extends Controller
     }
 
 
-        public function update(Request $request)
+    public function update(Request $request)
     {
 
         $user = auth()->user();
 
         $data = $request->validate([
+            'employee_number' => 'required|string',
             'firstname' => 'required|string',
             'lastname'  => 'required|string',
-            'email'     => 'required|email',
+            // 'email'     => 'required|email',
             'mobile'    => 'nullable|string',
         ]);
 
@@ -142,36 +144,35 @@ class UserController extends Controller
     }
 
     public function updateEmail(Request $request)
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    $data = $request->validate([
-        'email' => [
-            'required',
-            'email',
-            Rule::unique('users', 'email')->ignore($user->id),
-        ],
-    ]);
+        $data = $request->validate([
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users', 'email')->ignore($user->id),
+            ],
+        ]);
 
-    // Update email
-    $user->email = $data['email'];
+        // Update email
+        $user->email = $data['email'];
 
-    // If you use email verification, reset status
-    if ($user->email !== $data['email']) {
-        $user->email_verified_at = null;
+        // If you use email verification, reset status
+        if ($user->email !== $data['email']) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        // OPTIONAL: send verification email again
+        // $this->service->sendVerificationLink($user);
+
+        return response()->json([
+            'status' => 'success',
+            'email' => $user->email,
+            'message' => 'Email updated successfully',
+        ]);
     }
-
-    $user->save();
-
-    // OPTIONAL: send verification email again
-    // $this->service->sendVerificationLink($user);
-
-    return response()->json([
-        'status' => 'success',
-        'email' => $user->email,
-        'message' => 'Email updated successfully',
-    ]);
-}
-
 
 }
