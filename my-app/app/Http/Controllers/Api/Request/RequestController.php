@@ -50,88 +50,85 @@ class RequestController extends Controller
         );
     }
 
-
     //Add new request
-public function store(AddRequest $request)
-{
-    // ✅ Authenticated via Bearer token (auth:api middleware should already enforce this)
-    $user = Auth::user();
+    public function store(AddRequest $request)
+    {
+        // ✅ Authenticated via Bearer token (auth:api middleware should already enforce this)
+        $user = Auth::user();
 
-    if (!$user) {
-        return response()->json(['message' => 'Unauthenticated'], 401);
-    }
-
-    // ✅ Validation (you can move this fully into AddRequest later)
-    $validated = $request->validate([
-        'status' => 'required|string|max:255',
-        'items' => 'required|array|min:1',
-        'items.*.product_id' => 'required|exists:products,id',
-        'items.*.unit_id' => 'required|exists:units,id',
-        'items.*.quantity' => 'required|integer|min:1',
-    ]);
-
-    DB::transaction(function () use ($validated, $user, &$req) {
-
-        // ✅ Create request
-        $req = RequestModel::create([
-            'requestor_id' => $user->id,
-            'status' => $validated['status'],
-        ]);
-
-        // ✅ Create request items + update inventory
-        foreach ($validated['items'] as $item) {
-            $product = Product::lockForUpdate()->findOrFail($item['product_id']);
-
-            $startingBalance = 0;
-            $endingBalance   = 0;
-
-            // $startingBalance = $product->quantity;
-            // $endingBalance   = $startingBalance - $item['quantity'];
-
-            // if ($endingBalance < 0) {
-            //     throw new \Exception("Insufficient stock for {$product->product_name}");
-            // }
-
-            $product->update([
-                'quantity' => $endingBalance,
-            ]);
-
-            $req->items()->create([
-                'product_id'       => $product->id,
-                'unit_id'         => $item['unit_id'],
-                'quantity'         => $item['quantity'],
-                'starting_balance' => $startingBalance,
-                'ending_balance'   => $endingBalance,
-            ]);
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        // ✅ Log initial status
-        RequestStatusLog::create([
-            'request_id' => $req->id,
-            'updated_by' => $user->id,
-            'status'     => $req->status,
+        // ✅ Validation (you can move this fully into AddRequest later)
+        $validated = $request->validate([
+            'status' => 'required|string|max:255',
+            'items' => 'required|array|min:1',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.unit_id' => 'required|exists:units,id',
+            'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $this->notificationService->notifyRoleStatus(
-            'ACCOUNTING',
-            $req->id,
-            'ACCOUNTING',
-            'PENDING'
-        );
+        DB::transaction(function () use ($validated, $user, &$req) {
 
-    });
+            // ✅ Create request
+            $req = RequestModel::create([
+                'requestor_id' => $user->id,
+                'status' => $validated['status'],
+            ]);
 
-    // ✅ Return the CREATED request (NOT the HTTP request object)
-    return response()->json([
-        'message' => 'Request created successfully',
-        'data' => $req->load([
-            'items.product',
-            'requestor',
-        ]),
-    ], 201);
-}
+            // ✅ Create request items + update inventory
+            foreach ($validated['items'] as $item) {
+                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
 
+                $startingBalance = 0;
+                $endingBalance   = 0;
 
+                // $startingBalance = $product->quantity;
+                // $endingBalance   = $startingBalance - $item['quantity'];
+
+                // if ($endingBalance < 0) {
+                //     throw new \Exception("Insufficient stock for {$product->product_name}");
+                // }
+
+                $product->update([
+                    'quantity' => $endingBalance,
+                ]);
+
+                $req->items()->create([
+                    'product_id'       => $product->id,
+                    'unit_id'         => $item['unit_id'],
+                    'quantity'         => $item['quantity'],
+                    'starting_balance' => $startingBalance,
+                    'ending_balance'   => $endingBalance,
+                ]);
+            }
+
+            // ✅ Log initial status
+            RequestStatusLog::create([
+                'request_id' => $req->id,
+                'updated_by' => $user->id,
+                'status'     => $req->status,
+            ]);
+
+            $this->notificationService->notifyRoleStatus(
+                'ACCOUNTING',
+                $req->id,
+                'ACCOUNTING',
+                'PENDING'
+            );
+
+        });
+
+        // ✅ Return the CREATED request (NOT the HTTP request object)
+        return response()->json([
+            'message' => 'Request created successfully',
+            'data' => $req->load([
+                'items.product',
+                'requestor',
+            ]),
+        ], 201);
+    }
 
     public function show($id)
     {
