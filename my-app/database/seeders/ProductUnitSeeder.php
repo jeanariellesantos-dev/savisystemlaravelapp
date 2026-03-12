@@ -64,12 +64,12 @@ class ProductUnitSeeder extends Seeder
             'Plastic Dispencer'     => ['Piece', 'Kilo'],
             'Rags'                  => ['Piece', 'Kilo'],
             'Spray Bottle'          => ['Piece', 'Kilo'],
-            'Tooth Brush'           => ['Piece', 'Kilo'],
-            'Wash Mitt'             => ['Piece', 'Kilo'],
+            'Toothbrush'            => ['Piece', 'Kilo'],
+            'Washmitt'              => ['Piece', 'Kilo'],
             'Paint Brush #2'        => ['Piece', 'Kilo'],
 
             // ---------------- OFFICE SUPPLIES ----------------
-            'Ball Pen'                    => ['Piece', 'Pad'],
+            'Ball Pen'                   => ['Piece', 'Pad'],
             'Whiteboard Marker'          => ['Piece', 'Pad'],
             'Stabilo'                    => ['Piece', 'Pad'],
             'Pentel Pen'                 => ['Piece', 'Pad'],
