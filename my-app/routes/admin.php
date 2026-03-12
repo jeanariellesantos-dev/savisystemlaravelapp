@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Admin\DealershipController;
 use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\DashboardController;
+use App\Http\Controllers\Api\Admin\RequestController;
 
 Route::middleware('auth:api')->group(function () {
 
@@ -21,8 +22,16 @@ Route::middleware('auth:api')->group(function () {
                 Route::post('/users', [UserController::class, 'store']);
                 Route::patch('/users/{user}/toggle', [UserController::class, 'toggleStatus']);
                 Route::put('/users/{user}', [UserController::class, 'update']);
+                // ADMIN
+                Route::prefix('requests')->group(function () {
 
+                    Route::get('/', [RequestController::class, 'index']);
+                    Route::post('/', [RequestController::class, 'store']);
+                    Route::get('/{id}', [RequestController::class, 'show']);
+                    Route::put('/{id}', [RequestController::class, 'update']);
+                    Route::delete('/{id}', [RequestController::class, 'destroy']);
 
+                });
                 Route::apiResource('categories', CategoryController::class);
 
                 Route::patch('categories/{category}/toggle', 

@@ -23,7 +23,8 @@ class LoginRequest extends FormRequest
     {
         return [
             //            
-            'email' => 'required|email:filter',
+            // 'email' => 'required|email:filter',
+            'employee_number' => 'required',
             'password' => 'required|string',
         ];
     }

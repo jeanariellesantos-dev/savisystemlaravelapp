@@ -24,17 +24,26 @@ class DashboardController extends Controller
                 THEN 1 ELSE 0 END) as pending,
 
             SUM(CASE WHEN status = 'PENDING_INVENTORY' THEN 1 ELSE 0 END) as approved,
-            SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected,
-            SUM(CASE WHEN status = 'shipped' THEN 1 ELSE 0 END) as shipped,
-            SUM(CASE WHEN status = 'received' THEN 1 ELSE 0 END) as received
+
+            SUM(CASE WHEN status = 'REJECTED' THEN 1 ELSE 0 END) as rejected,
+
+            SUM(CASE WHEN status = 'SHIPPED' THEN 1 ELSE 0 END) as shipped,
+
+            SUM(CASE WHEN status = 'RECEIVED' THEN 1 ELSE 0 END) as received,
+
+            SUM(CASE WHEN status = 'ON_HOLD' THEN 1 ELSE 0 END) as on_hold,
+
+            SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
         ")->first();
 
         return response()->json([
-            'pending'  => (int) $stats->pending,
-            'approved' => (int) $stats->approved,
-            'rejected' => (int) $stats->rejected,
-            'shipped'  => (int) $stats->shipped,
-            'received' => (int) $stats->received,
+            'pending'   => (int) $stats->pending,
+            'approved'  => (int) $stats->approved,
+            'rejected'  => (int) $stats->rejected,
+            'shipped'   => (int) $stats->shipped,
+            'received'  => (int) $stats->received,
+            'on_hold'   => (int) $stats->on_hold,
+            'cancelled' => (int) $stats->cancelled,
         ]);
     }
 

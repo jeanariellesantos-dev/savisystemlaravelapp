@@ -8,6 +8,7 @@ use App\Models\Approval;
 use App\Models\Request as RequestModel;
 use App\Models\RequestStatusLog;
 use App\Customs\Services\NotificationService;
+use Illuminate\Support\Facades\DB;
 
 class ApprovalController extends Controller
 {
@@ -20,95 +21,182 @@ class ApprovalController extends Controller
     }
 
     public function approve(Request $request, $id)
-{
-    $request->validate([
-        'action' => 'required|in:APPROVED,REJECTED',
-        'remarks' => 'nullable|string'
-    ]);
+    {
+        $request->validate([
+            'action' => 'required|in:APPROVED,REJECTED,ON_HOLD,CANCELLED',
+            'remarks' => 'nullable|string',
+            'items' => 'nullable|array',
+            'items.*.product_id' => 'required_with:items|exists:products,id',
+            'items.*.unit_id' => 'required_with:items|exists:units,id',
+            'items.*.quantity' => 'required_with:items|integer|min:1'
+        ]);
 
-    $req = RequestModel::findOrFail($id);
-    $user = auth()->user();
-    $roleName = $user->role->role_name;
-    $role = strtoupper( $roleName);
+        $req = RequestModel::findOrFail($id);
+        $user = auth()->user();
+        $roleName = $user->role->role_name;
+        $role = strtoupper($roleName);
 
-    $flow = [
-        'ACCOUNTING' => 'PENDING_SUPERVISOR',
-        'SUPERVISOR' => 'PENDING_CLUSTER_HEAD',
-        'CLUSTER_HEAD' => 'PENDING_INVENTORY',
-        'INVENTORY' => 'SHIPPED',
-        'OPERATION' => 'RECEIVED',
-    ];
+        $flow = [
+            'ACCOUNTING' => 'PENDING_SUPERVISOR',
+            'SUPERVISOR' => 'PENDING_CLUSTER_HEAD',
+            'CLUSTER_HEAD' => 'PENDING_INVENTORY',
+            'INVENTORY' => 'SHIPPED',
+            'OPERATION' => 'RECEIVED',
+        ];
 
-    if ($request->action === 'REJECTED') {
-        $req->status = 'REJECTED';
-    } else {
-        abort_unless(isset($flow[$role]), 403);
-        $req->status = $flow[$role];
-    }
+        /*
+        |--------------------------------------------------------------------------
+        | DETERMINE STATUS
+        |--------------------------------------------------------------------------
+        */
 
-    // ✅ Prefix remarks with role (only if remarks exist)
-    $formattedRemarks = "[{$role}]: " . (
-        $request->filled('remarks')
-            ? trim($request->remarks)
-            : 'No remarks provided'
-    );
+        if ($request->action === 'REJECTED') {
 
-    Approval::create([
-        'request_id' => $req->id,
-        'approver_id' => auth()->id(),
-        'role_id' => $user->id,
-        'action' => $request->action,
-        'remarks' => $formattedRemarks
-    ]);
+            $req->status = 'REJECTED';
 
-    RequestStatusLog::create([
-        'request_id' => $req->id,
-        'updated_by' => auth()->id(),
-        'status' => $req->status
-    ]);
+        } elseif ($request->action === 'ON_HOLD') {
 
+            // 🔁 Toggle ON_HOLD
+            if ($req->status === 'ON_HOLD') {
 
-    // 🔔 NOTIFICATIONS
-    if ($req->status === 'REJECTED') {
+                $previousStatus = RequestStatusLog::where('request_id', $req->id)
+                    ->where('status', '!=', 'ON_HOLD')
+                    ->orderByDesc('created_at')
+                    ->value('status');
 
-        // rejected always goes back to OPERATION
-        $this->notificationService->notifyRoleStatus(
-            'OPERATION',
-            $req->id,
-            $role,
-            'REJECTED'
+                if (!$previousStatus) {
+                    return response()->json([
+                        'message' => 'Previous status not found'
+                    ], 422);
+                }
+
+                $req->status = $previousStatus;
+
+            } else {
+
+                $req->status = 'ON_HOLD';
+
+            }
+
+        } elseif ($request->action === 'CANCELLED') {
+
+            $req->status = 'CANCELLED';
+
+        } else {
+
+            abort_unless(isset($flow[$role]), 403);
+            $req->status = $flow[$role];
+
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | UPDATE ITEMS (ONLY IF PROVIDED)
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->action === 'APPROVED' && $request->has('items')) {
+
+            DB::transaction(function () use ($request, $req) {
+
+                $req->items()->delete();
+
+                foreach ($request->items as $item) {
+                    $req->items()->create([
+                        'product_id' => $item['product_id'],
+                        'unit_id' => $item['unit_id'],
+                        'quantity' => $item['quantity'],
+                        'starting_balance' => 0,
+                        'ending_balance' => 0,
+                    ]);
+                }
+
+            });
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | REMARKS
+        |--------------------------------------------------------------------------
+        */
+
+        $actionLabel = match ($request->action) {
+            'APPROVED' => 'Approved',
+            'REJECTED' => 'Rejected',
+            'ON_HOLD' => $req->status === 'ON_HOLD'
+                ? 'Put on hold'
+                : 'Resumed from hold',
+            'CANCELLED' => 'Cancelled',
+        };
+
+        $formattedRemarks = "[{$role}]: {$actionLabel}. " . (
+            $request->filled('remarks')
+                ? trim($request->remarks)
+                : 'No remarks provided'
         );
 
-    } else {
+        Approval::create([
+            'request_id' => $req->id,
+            'approver_id' => auth()->id(),
+            'role_id' => $user->id,
+            'action' => $request->action,
+            'remarks' => $formattedRemarks
+        ]);
 
-        $nextRole = $this->getNextRoleFromStatus($req->status);
+        RequestStatusLog::create([
+            'request_id' => $req->id,
+            'updated_by' => auth()->id(),
+            'status' => $req->status
+        ]);
 
-        if ($nextRole) {
+        /*
+        |--------------------------------------------------------------------------
+        | NOTIFICATIONS
+        |--------------------------------------------------------------------------
+        */
+
+        if (in_array($req->status, ['REJECTED','CANCELLED', 'ON_HOLD'])) {
+
             $this->notificationService->notifyRoleStatus(
-                $nextRole,
+                'OPERATION',
                 $req->id,
                 $role,
-                'PENDING'
+                $req->status
             );
+
+        } else {
+
+            $nextRole = $this->getNextRoleFromStatus($req->status);
+
+            if ($nextRole) {
+                $this->notificationService->notifyRoleStatus(
+                    $nextRole,
+                    $req->id,
+                    $role,
+                    'PENDING'
+                );
+            }
+
         }
+
+        $req->save();
+
+        return response()->json([
+            'message' => 'Action completed'
+        ]);
     }
 
-    $req->save();
+    private function getNextRoleFromStatus(string $status): ?string
+    {
+        if (str_starts_with($status, 'PENDING_')) {
+            return str_replace('PENDING_', '', $status);
+        }
 
-    return response()->json(['message' => 'Action completed']);
-}
-
-private function getNextRoleFromStatus(string $status): ?string
-{
-    if (str_starts_with($status, 'PENDING_')) {
-        return str_replace('PENDING_', '', $status);
+        return match ($status) {
+            'SHIPPED'  => 'OPERATION',
+            'RECEIVED' => 'INVENTORY',
+            default    => null,
+        };
     }
-
-    return match ($status) {
-        'SHIPPED'  => 'OPERATION',
-        'RECEIVED' => 'INVENTORY',
-        default    => null,
-    };
-}
 
 }

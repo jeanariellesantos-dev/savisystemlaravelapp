@@ -17,13 +17,14 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with('role')
-            ->select('id','firstname','lastname','email','mobile','is_active','role_id')
+            ->select('id','employee_number','firstname','lastname','email','mobile','is_active','role_id')
             ->get();
 
         return response()->json(
             $users->map(function ($user) {
                 return [
                     'id' => $user->id,
+                    'employee_number' => $user->employee_number,
                     'firstname' => $user->firstname,
                     'lastname' => $user->lastname,
                     'email' => $user->email,
@@ -42,14 +43,16 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'employee_number' => 'required|string|max:255',
             'firstname' => 'required|string|max:255',
             'lastname'  => 'required|string|max:255',
-            'email'     => 'required|email|unique:users,email',
+            'email'     => 'email',
             'role_id'   => 'required|exists:roles,id',
             'password'  => 'required|min:8',
         ]);
 
         $user = User::create([
+            'employee_number' => $validated['employee_number'],
             'firstname' => $validated['firstname'],
             'lastname'  => $validated['lastname'],
             'email'     => $validated['email'],
@@ -62,15 +65,16 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User created successfully',
-            'user' => [
-                'id' => $user->id,
-                'firstname' => $user->firstname,
-                'lastname' => $user->lastname,
-                'email' => $user->email,
-                'role_id' => $user->role_id,
-                'role' => $user->role?->role_name,
-                'is_active' => $user->is_active,
-            ]
+            // 'user' => [
+            //     'id' => $user->id,
+            //     'employee_number' => $user->employee_number,
+            //     'firstname' => $user->firstname,
+            //     'lastname' => $user->lastname,
+            //     'email' => $user->email,
+            //     'role_id' => $user->role_id,
+            //     'role' => $user->role?->role_name,
+            //     'is_active' => $user->is_active,
+            // ]
         ], 201);
     }
 
@@ -80,19 +84,23 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
+            'employee_number' => [
+                'required',
+                'string',
+                Rule::unique('users','employee_number')->ignore($user->id),
+            ],
             'firstname' => ['required','string','max:255'],
             'lastname'  => ['required','string','max:255'],
 
             'email' => [
-                'required',
                 'email',
-                Rule::unique('users','email')->ignore($user->id),
             ],
 
             'role_id' => ['required','exists:roles,id'],
             'password' => ['nullable','min:8'],
         ]);
 
+        $user->employee_number = $validated['employee_number'];
         $user->firstname = $validated['firstname'];
         $user->lastname  = $validated['lastname'];
         $user->email     = $validated['email'];
@@ -107,7 +115,7 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'User updated successfully',
-            'user' => $user
+            // 'user' => $user
         ]);
     }
 
