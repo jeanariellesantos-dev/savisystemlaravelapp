@@ -27,6 +27,7 @@ class UserController extends Controller
             ->leftJoin('dealerships', 'users.dealership_id', '=', 'dealerships.id')
             ->select([
                 'users.id as user_id',
+                'users.employee_number as employee_number',
                 'users.firstname',
                 'users.lastname',
                 'roles.id as role_id',
