@@ -9,6 +9,8 @@ use App\Http\Controllers\Api\Admin\DealershipController;
 use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\RequestController;
+use App\Http\Controllers\Api\Admin\ApprovalController;
+use App\Http\Controllers\Api\Admin\FulfillmentController;
 
 Route::middleware('auth:api')->group(function () {
 
@@ -30,6 +32,10 @@ Route::middleware('auth:api')->group(function () {
                     Route::get('/{id}', [RequestController::class, 'show']);
                     Route::put('/{id}', [RequestController::class, 'update']);
                     Route::delete('/{id}', [RequestController::class, 'destroy']);
+
+                    Route::post('/{id}/approve', [ApprovalController::class, 'approve']);
+                    Route::post('/{id}/fulfill', [FulfillmentController::class, 'fulfill']);
+                    Route::post('/{id}/receive', [FulfillmentController::class, 'receive']);
 
                 });
                 Route::apiResource('categories', CategoryController::class);
