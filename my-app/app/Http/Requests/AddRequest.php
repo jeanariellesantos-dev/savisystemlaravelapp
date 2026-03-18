@@ -22,7 +22,8 @@ class AddRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //            
+            //     
+            'requestor_id' => 'required|exists:users,id',       
             'status' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',

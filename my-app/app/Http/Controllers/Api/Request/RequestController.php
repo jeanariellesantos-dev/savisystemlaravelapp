@@ -14,6 +14,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Notification;
+
 use App\Customs\Services\NotificationService;
 
 class RequestController extends Controller
@@ -50,6 +52,7 @@ class RequestController extends Controller
         );
     }
 
+
     //Add new request
     public function store(AddRequest $request)
     {
@@ -62,6 +65,7 @@ class RequestController extends Controller
 
         // ✅ Validation (you can move this fully into AddRequest later)
         $validated = $request->validate([
+            'requestor_id' => 'required|exists:users,id', 
             'status' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -73,7 +77,7 @@ class RequestController extends Controller
 
             // ✅ Create request
             $req = RequestModel::create([
-                'requestor_id' => $user->id,
+                'requestor_id' =>  $validated['requestor_id'] ,
                 'status' => $validated['status'],
             ]);
 
@@ -272,11 +276,6 @@ public function history()
         ->latest()
         ->paginate(10);
 }
-
-
-
-
-
 
 
 }

@@ -155,10 +155,11 @@ class ApprovalController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (in_array($req->status, ['REJECTED','CANCELLED', 'ON_HOLD'])) {
+        if (in_array($req->status, ['REJECTED','CANCELLED','ON_HOLD'])) {
 
-            $this->notificationService->notifyRoleStatus(
-                'OPERATION',
+            // Notify the requestor
+            $this->notificationService->notifyUserStatus(
+                $req->requestor_id,
                 $req->id,
                 $role,
                 $req->status
@@ -169,14 +170,16 @@ class ApprovalController extends Controller
             $nextRole = $this->getNextRoleFromStatus($req->status);
 
             if ($nextRole) {
+
+                // Notify next approver
                 $this->notificationService->notifyRoleStatus(
                     $nextRole,
                     $req->id,
                     $role,
                     'PENDING'
                 );
-            }
 
+            }
         }
 
         $req->save();
