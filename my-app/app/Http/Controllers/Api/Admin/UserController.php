@@ -50,6 +50,7 @@ class UserController extends Controller
             'email'     => 'email',
             'mobile'     => 'required|string|max:255',
             'role_id'   => 'required|exists:roles,id',
+            'dealership_id' => ['required','exists:dealerships,id'],
             'password'  => 'required|min:8',
         ]);
 
