@@ -11,14 +11,17 @@ class ProductController extends Controller
 {
     /* ================= INDEX ================= */
 
-    public function index()
-    {
-        $products = Product::with(['category', 'units'])
-            ->latest()
-            ->get();
+        public function index()
+        {
+            $products = Product::with(['category', 'units'])
+                ->join('categories', 'products.category_id', '=', 'categories.id')
+                ->orderBy('categories.name', 'asc')
+                ->orderBy('products.product_name', 'asc')
+                ->select('products.*') // IMPORTANT: avoid column conflicts
+                ->get();
 
-        return response()->json($products);
-    }
+            return response()->json($products);
+        }
 
     /* ================= STORE ================= */
 

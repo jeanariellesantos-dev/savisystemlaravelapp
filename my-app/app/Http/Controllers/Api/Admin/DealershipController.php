@@ -13,7 +13,7 @@ class DealershipController extends Controller
     =============================== */
     public function index()
     {
-        $dealerships = Dealership::latest()->get();
+        $dealerships = Dealership::orderBy('dealership_name', 'asc')->get();
 
         return response()->json($dealerships);
     }
