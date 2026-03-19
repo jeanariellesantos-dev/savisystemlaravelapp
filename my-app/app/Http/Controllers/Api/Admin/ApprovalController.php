@@ -1,25 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\Api\Request;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Approval;
 use App\Models\Request as RequestModel;
+use App\Models\Approval;
 use App\Models\RequestStatusLog;
-use App\Customs\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 
 class ApprovalController extends Controller
 {
-
-    protected $notificationService;
-
-    public function __construct(NotificationService $notificationService)
-    {
-        $this->notificationService = $notificationService;
-    }
-
     public function approve(Request $request, $id)
     {
         $request->validate([
@@ -33,9 +24,15 @@ class ApprovalController extends Controller
 
         $req = RequestModel::findOrFail($id);
         $user = auth()->user();
-        $roleName = $user->role->role_name;
-        $role = strtoupper($roleName);
 
+        // 🔒 Ensure admin only
+        abort_unless($user->role->role_name === 'ADMINISTRATOR', 403);
+
+        /*
+        |--------------------------------------------------------------------------
+        | FLOW (same as normal)
+        |--------------------------------------------------------------------------
+        */
         $flow = [
             'ACCOUNTING' => 'PENDING_SUPERVISOR',
             'SUPERVISOR' => 'PENDING_CLUSTER_HEAD',
@@ -46,17 +43,29 @@ class ApprovalController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | RESOLVE ROLE FROM STATUS
+        |--------------------------------------------------------------------------
+        */
+        $effectiveRole = match ($req->status) {
+            'PENDING_ACCOUNTING' => 'ACCOUNTING',
+            'PENDING_SUPERVISOR' => 'SUPERVISOR',
+            'PENDING_CLUSTER_HEAD' => 'CLUSTER_HEAD',
+            'PENDING_INVENTORY' => 'INVENTORY',
+            'SHIPPED' => 'OPERATION',
+            default => null,
+        };
+
+        /*
+        |--------------------------------------------------------------------------
         | DETERMINE STATUS
         |--------------------------------------------------------------------------
         */
-
         if ($request->action === 'REJECTED') {
 
             $req->status = 'REJECTED';
 
         } elseif ($request->action === 'ON_HOLD') {
 
-            // 🔁 Toggle ON_HOLD
             if ($req->status === 'ON_HOLD') {
 
                 $previousStatus = RequestStatusLog::where('request_id', $req->id)
@@ -64,18 +73,12 @@ class ApprovalController extends Controller
                     ->orderByDesc('created_at')
                     ->value('status');
 
-                if (!$previousStatus) {
-                    return response()->json([
-                        'message' => 'Previous status not found'
-                    ], 422);
-                }
+                abort_if(!$previousStatus, 422, 'Previous status not found');
 
                 $req->status = $previousStatus;
 
             } else {
-
                 $req->status = 'ON_HOLD';
-
             }
 
         } elseif ($request->action === 'CANCELLED') {
@@ -84,17 +87,16 @@ class ApprovalController extends Controller
 
         } else {
 
-            abort_unless(isset($flow[$role]), 403);
-            $req->status = $flow[$role];
+            abort_unless(isset($flow[$effectiveRole]), 403);
 
+            $req->status = $flow[$effectiveRole];
         }
 
         /*
         |--------------------------------------------------------------------------
-        | UPDATE ITEMS (ONLY IF PROVIDED)
+        | UPDATE ITEMS
         |--------------------------------------------------------------------------
         */
-
         if ($request->action === 'APPROVED' && $request->has('items')) {
 
             DB::transaction(function () use ($request, $req) {
@@ -119,7 +121,6 @@ class ApprovalController extends Controller
         | REMARKS
         |--------------------------------------------------------------------------
         */
-
         $actionLabel = match ($request->action) {
             'APPROVED' => 'Approved',
             'REJECTED' => 'Rejected',
@@ -129,7 +130,7 @@ class ApprovalController extends Controller
             'CANCELLED' => 'Cancelled',
         };
 
-        $formattedRemarks = "[{$role}]: {$actionLabel}. " . (
+        $formattedRemarks = "[ADMIN]: {$actionLabel}. " . (
             $request->filled('remarks')
                 ? trim($request->remarks)
                 : 'No remarks provided'
@@ -149,57 +150,10 @@ class ApprovalController extends Controller
             'status' => $req->status
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | NOTIFICATIONS
-        |--------------------------------------------------------------------------
-        */
-
-        if (in_array($req->status, ['REJECTED','CANCELLED','ON_HOLD'])) {
-
-            // Notify the requestor
-            $this->notificationService->notifyUserStatus(
-                $req->requestor_id,
-                $req->id,
-                $role,
-                $req->status
-            );
-
-        } else {
-
-            $nextRole = $this->getNextRoleFromStatus($req->status);
-
-            if ($nextRole) {
-
-                // Notify next approver
-                $this->notificationService->notifyRoleStatus(
-                    $nextRole,
-                    $req->id,
-                    $role,
-                    'PENDING'
-                );
-
-            }
-        }
-
         $req->save();
 
         return response()->json([
-            'message' => 'Action completed'
+            'message' => 'Admin action completed'
         ]);
     }
-
-    private function getNextRoleFromStatus(string $status): ?string
-    {
-        if (str_starts_with($status, 'PENDING_')) {
-            return str_replace('PENDING_', '', $status);
-        }
-
-        return match ($status) {
-            'SHIPPED'  => 'OPERATION',
-            'RECEIVED' => 'INVENTORY',
-            default    => null,
-        };
-    }
-
 }

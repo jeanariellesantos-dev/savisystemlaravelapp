@@ -17,5 +17,6 @@ Route::middleware(['auth'])->group(function () {
     Route::put('user/profile', [UserController::class, 'update']);
     Route::put('user/update_email', [UserController::class, 'updateEmail']);
     Route::post('user/logout', [UserController::class, 'logout']);
+    Route::get('user', [UserController::class, 'index']);
 
 });

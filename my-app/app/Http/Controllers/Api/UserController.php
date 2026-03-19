@@ -20,6 +20,35 @@ use App\Models\Role;
 class UserController extends Controller
 {
 
+    public function index(Request $request)
+    {
+        $query = User::query()
+            ->join('roles', 'users.role_id', '=', 'roles.id')
+            ->leftJoin('dealerships', 'users.dealership_id', '=', 'dealerships.id')
+            ->select([
+                'users.id as user_id',
+                'users.employee_number as employee_number',
+                'users.firstname',
+                'users.lastname',
+                'roles.id as role_id',
+                'roles.role_name',
+                'dealerships.id as dealership_id',
+                'dealerships.dealership_name',
+            ]);
+
+        // ✅ Filter by role (optional)
+        if ($request->filled('role')) {
+            $query->where('roles.role_name', strtoupper($request->role));
+        }
+
+        // ✅ Only active users (recommended)
+        $query->where('users.is_active', 1);
+
+        return response()->json([
+            'data' => $query->get()
+        ]);
+    }
+
     public function __construct(private EmailVerificationService $service)
     {
     }

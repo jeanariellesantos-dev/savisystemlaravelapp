@@ -80,11 +80,11 @@ class FulfillmentController extends Controller
             'status' => $req->status
          ]);   
          
-        $this->notificationService->notifyRoleStatus(
-            'OPERATION',
-            $req->id,
-            'INVENTORY',
-            'SHIPPED'
+        $this->notificationService->notifyUserStatus(
+                $req->requestor_id,
+                $req->id,
+                'INVENTORY',
+                $req->status
         );
 
         return response()->json([
@@ -124,7 +124,7 @@ class FulfillmentController extends Controller
             'updated_by' => auth()->id(),
             'status' => $req->status
          ]);
-         
+
         $this->notificationService->notifyRoleStatus(
             'INVENTORY',
             $req->id,

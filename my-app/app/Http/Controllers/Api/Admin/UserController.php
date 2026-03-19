@@ -17,7 +17,7 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with('role')
-            ->select('id','employee_number','firstname','lastname','email','mobile','is_active','role_id')
+            ->select('id','employee_number','firstname','lastname','email','mobile','is_active','role_id','dealership_id')
             ->get();
 
         return response()->json(
@@ -30,6 +30,7 @@ class UserController extends Controller
                     'email' => $user->email,
                     'mobile' => $user->mobile,
                     'role_id' => $user->role_id,
+                    'dealership_id' => $user->dealership_id,
                     'role' => $user->role?->role_name ?? null,
                     'is_active' => $user->is_active,
                 ];
@@ -47,7 +48,9 @@ class UserController extends Controller
             'firstname' => 'required|string|max:255',
             'lastname'  => 'required|string|max:255',
             'email'     => 'email',
+            'mobile'     => 'required|string|max:255',
             'role_id'   => 'required|exists:roles,id',
+            'dealership_id' => ['required','exists:dealerships,id'],
             'password'  => 'required|min:8',
         ]);
 
@@ -56,7 +59,9 @@ class UserController extends Controller
             'firstname' => $validated['firstname'],
             'lastname'  => $validated['lastname'],
             'email'     => $validated['email'],
+            'mobile'     => $validated['mobile'],
             'role_id'   => $validated['role_id'],
+            'dealership_id'   => $validated['dealership_id'],
             'password'  => Hash::make($validated['password']),
             'is_active' => true,
         ]);
@@ -95,7 +100,8 @@ class UserController extends Controller
             'email' => [
                 'email',
             ],
-
+            'mobile'     => 'string|max:255',
+            'dealership_id' => ['required','exists:dealerships,id'],
             'role_id' => ['required','exists:roles,id'],
             'password' => ['nullable','min:8'],
         ]);
@@ -104,6 +110,8 @@ class UserController extends Controller
         $user->firstname = $validated['firstname'];
         $user->lastname  = $validated['lastname'];
         $user->email     = $validated['email'];
+        $user->mobile     = $validated['mobile'];
+        $user->dealership_id   = $validated['dealership_id'];
         $user->role_id   = $validated['role_id'];
 
         if (!empty($validated['password'])) {
