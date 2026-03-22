@@ -30,6 +30,7 @@ class ProductController extends Controller
             $validated = $request->validate([
                 'product_name' => 'required|string|max:255',
                 'category_id'  => 'required|exists:categories,id',
+                'stock'        => 'required|integer|min:0',
                 'unit_ids'     => 'nullable|array',
                 'unit_ids.*'   => 'exists:units,id',
             ]);
@@ -37,6 +38,7 @@ class ProductController extends Controller
             $product = Product::create([
                 'product_name' => $validated['product_name'],
                 'category_id'  => $validated['category_id'],
+                'stock' => $validated['stock'],
                 'is_active'    => true,
             ]);
 
@@ -65,12 +67,14 @@ class ProductController extends Controller
         $validated = $request->validate([
             'product_name' => 'required|string|max:255',
             'category_id'  => 'required|exists:categories,id',
+            'stock'        => 'required|integer|min:0',
             'unit_ids'     => 'nullable|array',
             'unit_ids.*'   => 'exists:units,id',
         ]);
 
         $product->update([
             'product_name' => $validated['product_name'],
+            'stock'        => $validated['stock'],
             'category_id'  => $validated['category_id'],
         ]);
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\InventoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Request\ApprovalController;
@@ -53,12 +54,20 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/{id}/units', [ProductController::class, 'units']);
+
     //Shipment
     Route::prefix('shipment')->group(function () {
         Route::get('/', [ShipmentController::class, 'index']);          // list
         Route::post('/', [ShipmentController::class, 'store']);         // create
         Route::patch('{id}/status', [ShipmentController::class, 'updateStatus']);
         Route::delete('{id}', [ShipmentController::class, 'destroy']);
+
+    });
+
+    //Inventory
+    Route::prefix('inventory')->group(function () {
+        Route::get('/', [InventoryController::class, 'index']);          // list
+        Route::post('/', [InventoryController::class, 'store']);          // list
 
     });
 

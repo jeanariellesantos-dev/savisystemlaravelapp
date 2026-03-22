@@ -35,7 +35,11 @@ class RequestController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('status', 'like', "%{$search}%");
+                $q->where('request_id', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%")
+                  ->orWhereHas('requestor', function ($q) use ($search) {
+                      $q->where('firstname', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -192,7 +196,7 @@ class RequestController extends Controller
         ]);
     }
 
-public function pending()
+public function pending(Request $request)
 {
     $user = auth()->user();
     $roleName = $user->role->role_name;
@@ -213,6 +217,19 @@ public function pending()
             'approvals:id,request_id,remarks,created_at',
             'shipments:id,request_id,shipped_date,received_date,tracking_link',
         ]);
+
+
+    // 🔍 Search filter
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('request_id', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhereHas('requestor', function ($q) use ($search) {
+                    $q->where('firstname', 'like', "%{$search}%");
+                });
+        });
+    }
 
     // OPERATION VIEW
     if ($roleName === 'OPERATION') {
@@ -241,7 +258,7 @@ public function pending()
         ->paginate(8);
 }
 
-public function history()
+public function history(Request $request)
 {
     $user = auth()->user();
     $roleName = $user->role->role_name;
@@ -254,6 +271,18 @@ public function history()
         'approvals:id,request_id,approver_id,remarks,created_at',
         'shipments:id,request_id,shipped_date,received_date,tracking_link'
     ]);
+
+        // 🔍 Search filter
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('request_id', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhereHas('requestor', function ($q) use ($search) {
+                    $q->where('firstname', 'like', "%{$search}%");
+                });
+        });
+    }
 
     // ================= OPERATION =================
     if ($roleName === 'OPERATION') {
