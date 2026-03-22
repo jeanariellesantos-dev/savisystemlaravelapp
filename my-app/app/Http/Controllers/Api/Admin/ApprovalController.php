@@ -101,7 +101,7 @@ class ApprovalController extends Controller
         | UPDATE ITEMS
         |--------------------------------------------------------------------------
         */
-        if ($request->action === 'APPROVED' && $request->has('items') && $req->status === 'PENDING_ACCOUNTING') {
+        if ($request->action === 'APPROVED' && $request->has('items') && $effectiveRole === 'ACCOUNTING') {
 
             $insufficientProducts = [];
 
@@ -134,7 +134,6 @@ class ApprovalController extends Controller
 
                 $req->items()->delete();
             
-
                 foreach ($request->items as $item) {
 
                     $starting = 0;
@@ -149,25 +148,26 @@ class ApprovalController extends Controller
                     $product->update([
                         'stock' => $ending
                     ]);
-                    
+
+                    InventoryMovement::create([
+                        'product_id' => $item['product_id'],
+                        'dealership_id' => $user->dealership_id,
+                        'type' => 'OUT',
+                        'quantity' => $item['quantity'], 
+                        'starting_balance' => $starting,
+                        'ending_balance' => $ending,
+                        'unit_id' => $item['unit_id'], 
+                        'reference_type' => 'request',
+                        'reference_id' => $req->id,
+                        'created_by' => $user->id
+                    ]);
+
                     $req->items()->create([
                         'product_id' => $item['product_id'],
                         'unit_id' => $item['unit_id'],
                         'quantity' => $item['quantity'],
                         'starting_balance' => $starting,
                         'ending_balance' => $ending,
-                    ]);
-
-                    InventoryMovement::create([
-                        'product_id' => $product->id,
-                        'dealership_id' => $user->dealership_id,
-                        'type' => 'OUT',
-                        'quantity' => $item->quantity,
-                        'starting_balance' => $starting,
-                        'ending_balance' => $ending,
-                        'reference_type' => 'request',
-                        'reference_id' => $req->id,
-                        'created_by' => $user->id
                     ]);
                     
                 }
