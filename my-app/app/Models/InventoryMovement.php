@@ -9,6 +9,7 @@ class InventoryMovement extends Model
     protected $fillable = [
         'product_id',
         'dealership_id',
+        'unit_id',
         'type',
         'quantity',
         'starting_balance',

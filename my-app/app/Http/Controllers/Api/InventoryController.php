@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 class InventoryController extends Controller
 {
     //
-public function index(Request $request)
+    public function index(Request $request)
 {
     $search = $request->input('search');
     $perPage = $request->input('per_page', 10);

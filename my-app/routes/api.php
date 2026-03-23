@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\InventoryController;
+use App\Http\Controllers\Api\ReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Request\ApprovalController;
@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\DealershipController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\InventoryController;
 
 use App\Http\Controllers\Api\Admin\UserController;
 
@@ -67,7 +68,15 @@ Route::middleware('auth:api')->group(function () {
     //Inventory
     Route::prefix('inventory')->group(function () {
         Route::get('/', [InventoryController::class, 'index']);          // list
-        Route::post('/', [InventoryController::class, 'store']);          // list
+        Route::post('/', [InventoryController::class, 'store']);          // create
+
+    });
+
+    //Report
+    Route::prefix('reports')->group(function () {
+        Route::get('/inventory', [ReportController::class, 'inventory']);          //list
+        Route::get('/inventory/excel', [ReportController::class, 'exportExcel']); //excel
+        Route::get('/inventory/pdf', [ReportController::class, 'exportPdf']); //pdf
 
     });
 
