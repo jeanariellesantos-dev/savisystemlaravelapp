@@ -15,124 +15,207 @@ use Illuminate\Support\Facades\Auth;
 class ReportController extends Controller
 {
     //
-    public function inventory(Request $request)
-    {
-        $dealershipId = $request->dealership_id;
+public function inventory(Request $request)
+{
+    $dealershipId = $request->dealership_id;
+    $reportType = $request->report_type ?? 'SUMMARY';
 
-        // date filters
-        if ($request->month) {
-            $startDate = Carbon::parse($request->month)->startOfMonth();
-            $endDate = Carbon::parse($request->month)->endOfMonth();
-        } else {
-            $startDate = Carbon::parse($request->start_date);
-            $endDate = Carbon::parse($request->end_date);
-        }
+    // date filters
+    if ($request->month) {
+        $startDate = Carbon::parse($request->month)->startOfMonth();
+        $endDate = Carbon::parse($request->month)->endOfMonth();
+    } else {
+        $startDate = Carbon::parse($request->start_date);
+        $endDate = Carbon::parse($request->end_date);
+    }
 
-        $report = DB::table('products as p')
+    // ✅ SUMMARY
+    if ($reportType === 'SUMMARY') {
+        $data = $this->getInventoryData($dealershipId, $startDate, $endDate);
 
-            // 🔹 JOIN latest inventory movement (ENDING BALANCE)
-            ->leftJoin(DB::raw("
-                (
-                    SELECT im1.*
-                    FROM inventory_movements im1
-                    INNER JOIN (
-                        SELECT product_id, MAX(id) as max_id
-                        FROM inventory_movements
-                        WHERE dealership_id = {$dealershipId}
-                        AND created_at <= '{$endDate}'
-                        GROUP BY product_id
-                    ) im2
-                    ON im1.id = im2.max_id
-                ) as last_im
-            "), 'p.id', '=', 'last_im.product_id')
+        return response()->json([
+            'type' => 'SUMMARY',
+            'data' => $data
+        ]);
+    }
 
-            ->leftJoin('units as u', 'last_im.unit_id', '=', 'u.id')
+    // 🔥 MONTHLY MODE
+    $months = [];
+    $current = $startDate->copy()->startOfMonth();
 
-            // 🔹 ACTUAL DELIVER (inventory movements OUT)
-            ->leftJoin(DB::raw("
-                (
-                    SELECT product_id, SUM(ABS(quantity)) as delivered
+    while ($current <= $endDate) {
+        $months[] = $current->copy();
+        $current->addMonth();
+    }
+
+    $finalReport = [];
+
+    foreach ($months as $month) {
+
+        $start = $month->copy()->startOfMonth();
+        $end = $month->copy()->endOfMonth();
+
+        // limit to selected range
+        if ($start < $startDate) $start = $startDate;
+        if ($end > $endDate) $end = $endDate;
+
+        $data = $this->getInventoryData($dealershipId, $start, $end);
+
+        $finalReport[] = [
+            'month' => $month->format('F Y'),
+            'data' => $data
+        ];
+    }
+
+    return response()->json([
+        'type' => 'MONTHLY',
+        'data' => $finalReport
+    ]);
+}
+
+    private function getInventoryData($dealershipId, $startDate, $endDate)
+{
+    return DB::table('products as p')
+
+        ->leftJoin(DB::raw("
+            (
+                SELECT im1.*
+                FROM inventory_movements im1
+                INNER JOIN (
+                    SELECT product_id, MAX(id) as max_id
                     FROM inventory_movements
                     WHERE dealership_id = {$dealershipId}
-                    AND type = 'OUT'
-                    AND created_at BETWEEN '{$startDate}' AND '{$endDate}'
+                    AND created_at <= '{$endDate}'
                     GROUP BY product_id
-                ) as im_out
-            "), 'p.id', '=', 'im_out.product_id')
+                ) im2
+                ON im1.id = im2.max_id
+            ) as last_im
+        "), 'p.id', '=', 'last_im.product_id')
 
-            // 🔹 ORDERED (request_items)
-            ->leftJoin(DB::raw("
-                (
-                    SELECT 
-                        ri.product_id, 
-                        SUM(ri.quantity) as ordered
-                    FROM request_items ri
-                    INNER JOIN requests r ON r.id = ri.request_id
-                    INNER JOIN users u ON u.id = r.requestor_id
-                    WHERE u.dealership_id = {$dealershipId}
-                    AND r.created_at BETWEEN '{$startDate}' AND '{$endDate}'
-                    GROUP BY ri.product_id
-                ) as req
-            "), 'p.id', '=', 'req.product_id')
+        ->leftJoin('units as u', 'last_im.unit_id', '=', 'u.id')
 
-            ->select(
-                'p.product_name as product',
-                'u.name as unit',
+        ->leftJoin(DB::raw("
+            (
+                SELECT product_id, SUM(ABS(quantity)) as delivered
+                FROM inventory_movements
+                WHERE dealership_id = {$dealershipId}
+                AND type = 'OUT'
+                AND created_at BETWEEN '{$startDate}' AND '{$endDate}'
+                GROUP BY product_id
+            ) as im_out
+        "), 'p.id', '=', 'im_out.product_id')
 
-                DB::raw('COALESCE(req.ordered, 0) as ordered'),
-                DB::raw('COALESCE(im_out.delivered, 0) as actual_deliver'),
-                DB::raw('COALESCE(last_im.ending_balance, 0) as ending_balance')
-            )
+        ->leftJoin(DB::raw("
+            (
+                SELECT product_id, SUM(quantity) as adjustment
+                FROM inventory_movements
+                WHERE dealership_id = {$dealershipId}
+                AND type = 'ADJUSTMENT'
+                AND created_at BETWEEN '{$startDate}' AND '{$endDate}'
+                GROUP BY product_id
+            ) as im_adjust
+        "), 'p.id', '=', 'im_adjust.product_id')
 
-            ->whereRaw('COALESCE(req.ordered, 0) > 0') // ✅ ADD HERE
-            ->orderBy('p.product_name', 'asc')
-            ->get();
+        ->leftJoin(DB::raw("
+            (
+                SELECT 
+                    ri.product_id, 
+                    SUM(ri.quantity) as ordered
+                FROM request_items ri
+                INNER JOIN requests r ON r.id = ri.request_id
+                INNER JOIN users u ON u.id = r.requestor_id
+                WHERE u.dealership_id = {$dealershipId}
+                AND r.created_at BETWEEN '{$startDate}' AND '{$endDate}'
+                GROUP BY ri.product_id
+            ) as req
+        "), 'p.id', '=', 'req.product_id')
 
-        return response()->json($report);
-    }
+        ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
+
+        ->select(
+            'c.name as category',
+            'p.product_name as product',
+            'u.name as unit',
+            DB::raw('COALESCE(req.ordered, 0) as ordered'),
+            DB::raw('COALESCE(im_out.delivered, 0) as delivered'),
+            DB::raw('COALESCE(im_adjust.adjustment, 0) as adjustment'),
+            DB::raw('COALESCE(last_im.ending_balance, 0) as ending')
+        )
+        ->whereRaw('COALESCE(req.ordered, 0) > 0')
+        ->orderBy('c.name', 'asc')
+        ->orderBy('p.product_name', 'asc')
+        ->get();
+}
 
 
-    public function exportExcel(Request $request)
-    {
-        $report = $this->inventory($request)->getData();
+public function exportExcel(Request $request)
+{
+    $response = $this->inventory($request)->getData(true);
 
-        $filename = 'Inventory_Report_' . now()->format('Ymd_His') . '.xlsx';
+    $type = $response['type'];
 
-        // ✅ LOG EXPORT
-        ReportExportLog::create([
-            'exported_by' => Auth::id(),
-            'export_format' => 'EXCEL',
-            'text' =>  $filename,
-        ]);
+    // 🔥 convert ALL data to object
+    $data = collect($response['data'])->map(function ($item) use ($type) {
 
-        return Excel::download(
-            new InventoryReportExport($report),
-            $filename
-        );
-    }
+        // MONTHLY
+        if ($type === 'MONTHLY') {
+            return [
+                'month' => $item['month'],
+                'data' => collect($item['data'])->map(fn($i) => (object) $i)
+            ];
+        }
 
-    public function exportPdf(Request $request)
-    {
-        $report = $this->inventory($request)->getData();
+        // SUMMARY
+        return (object) $item;
+    });
 
-        $pdf = Pdf::loadView('reports.inventory_pdf', [
-            'data' => $report,
-            'date' => now()->format('F d, Y'),
-        ])->setPaper('a4', 'portrait');
+    $filename = 'Inventory_Report_' . now()->format('Ymd_His') . '.xlsx';
 
-        // ✅ LOG EXPORT
+    ReportExportLog::create([
+        'exported_by' => Auth::id(),
+        'export_format' => 'EXCEL',
+        'text' => $filename,
+    ]);
 
-        $filename =  'Inventory_Report_' . now()->format('Ymd_His') . '.pdf';
+    return Excel::download(
+        new InventoryReportExport($data, $type),
+        $filename
+    );
+}
 
-        ReportExportLog::create([
-            'exported_by' => Auth::id(),
-            'export_format' => 'PDF',
-            'text' =>  $filename,
-        ]);
+public function exportPdf(Request $request)
+{
+    $response = $this->inventory($request)->getData(true);
 
-        return $pdf->download(
-           $filename
-        );
-    }
+    $type = $response['type'];
+
+    $data = collect($response['data'])->map(function ($item) use ($type) {
+
+        if ($type === 'MONTHLY') {
+            return [
+                'month' => $item['month'],
+                'data' => collect($item['data'])->map(fn($i) => (object) $i)
+            ];
+        }
+
+        return (object) $item;
+    });
+
+    $filename = 'Inventory_Report_' . now()->format('Ymd_His') . '.pdf';
+
+    $pdf = Pdf::loadView('reports.inventory_pdf', [
+        'data' => $data,
+        'type' => $type,
+        'date' => now()->format('F d, Y'),
+    ]);
+
+    ReportExportLog::create([
+        'exported_by' => Auth::id(),
+        'export_format' => 'PDF',
+        'text' => $filename,
+    ]);
+
+    return $pdf->download($filename);
+}
 
 }

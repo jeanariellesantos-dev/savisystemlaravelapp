@@ -59,7 +59,8 @@ class InventoryController extends Controller
             'product_id' => ['required', 'exists:products,id'],
             'dealership_id' => ['required', 'exists:dealerships,id'],
             'type' => ['required', 'string'],
-            'quantity' => ['required', 'integer', 'min:1'],
+            'unit_id' => ['required', 'exists:units,id'],
+            'quantity' => ['required', 'integer'],
             'remarks' => ['nullable', 'string']
         ]);
 
@@ -98,7 +99,7 @@ class InventoryController extends Controller
             } else { // ADJUSTMENT
 
                 // 👉 adjustment can be positive or negative
-                $adjustment =$validated->input('adjustment', $qty); 
+                $adjustment =$qty; 
                 $ending = $starting + $adjustment;
 
                 if ($ending < 0) {
@@ -119,6 +120,7 @@ class InventoryController extends Controller
             $movement = InventoryMovement::create([
                 'product_id' => $validated['product_id'],
                 'dealership_id' => $validated['dealership_id'],
+                'unit_id' => $validated['unit_id'],
                 'type' => $type,
                 'quantity' => $qty,
                 'starting_balance' => $starting,
