@@ -242,6 +242,12 @@ Version Date Description
 -> Integrate edit orders for all the approvers [ACCOUNTING, SUPERVISOR, CLUSTER HEAD]
 -> Add new status [ON_HOLD, CANCELLED] for Administrator
 -> Modify Administrator page eg. Dashboard and Manage Requests
+1.2.0 03/25/2026 -> Added inventory movement table
+-> Change request_export_logs to report_export_logs
+-> Added report generation
+-> Added stock field in product table
+-> Added inventory and report controllers
+-> Added pagination for admin controllers
 
 ---
 
