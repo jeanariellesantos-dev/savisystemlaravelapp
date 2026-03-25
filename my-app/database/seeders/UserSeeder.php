@@ -67,8 +67,8 @@ class UserSeeder extends Seeder
             ],
             [
                 'employee_number' => 'EMP-006',
-                'firstname' => 'OPERATIONS',
-                'lastname' => 'OPERATIONS',
+                'firstname' => 'INVENTORY',
+                'lastname' => 'INVENTORY',
                 'password' => 'pass1234',
                 'role_id' => '6', // INVENTORY
                 'dealership_id'=> '1',
