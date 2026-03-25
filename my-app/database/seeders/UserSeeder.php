@@ -67,13 +67,23 @@ class UserSeeder extends Seeder
             ],
             [
                 'employee_number' => 'EMP-006',
-                'firstname' => 'INVENTORY',
-                'lastname' => 'INVENTORY',
+                'firstname' => 'OPERATIONS',
+                'lastname' => 'OPERATIONS',
                 'password' => 'pass1234',
                 'role_id' => '6', // INVENTORY
                 'dealership_id'=> '1',
                 'mobile' => '+639165097848',
                 'email' => 'inventory@example.com',
+            ],
+            [
+                'employee_number' => 'EMP-OPS',
+                'firstname' => 'SAMPLE',
+                'lastname' => 'OPERATIONS',
+                'password' => 'pass1234',
+                'role_id' => '2', // OPERATIONS
+                'dealership_id'=> '1',
+                'mobile' => '+639165097848',
+                'email' => 'sampleops@example.com',
             ]
 
         ];
