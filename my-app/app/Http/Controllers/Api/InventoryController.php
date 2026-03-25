@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\InventoryMovement;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 class InventoryController extends Controller
 {
@@ -38,6 +39,13 @@ class InventoryController extends Controller
         // ✅ Search
         if ($search) {
             $query->where('products.product_name', 'like', "%{$search}%");
+        }
+
+        if ($request->start_date && $request->end_date) {
+            $start = Carbon::parse($request->start_date)->startOfDay();
+            $end = Carbon::parse($request->end_date)->endOfDay();
+
+            $query->whereBetween('im.created_at', [$start, $end]);
         }
 
         // ✅ Grouping (NO dealership_id here)

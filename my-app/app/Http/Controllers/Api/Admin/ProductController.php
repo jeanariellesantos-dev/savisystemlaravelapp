@@ -11,17 +11,39 @@ class ProductController extends Controller
 {
     /* ================= INDEX ================= */
 
-        public function index()
-        {
-            $products = Product::with(['category', 'units'])
-                ->join('categories', 'products.category_id', '=', 'categories.id')
-                ->orderBy('categories.name', 'asc')
-                ->orderBy('products.product_name', 'asc')
-                ->select('products.*') // IMPORTANT: avoid column conflicts
-                ->get();
+    public function index(Request $request)
+    {
+        $query = Product::with(['category', 'units'])
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->select('products.*');
 
-            return response()->json($products);
+        /* ===============================
+        SEARCH
+        =============================== */
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('products.product_name', 'like', "%{$search}%")
+                ->orWhere('categories.name', 'like', "%{$search}%");
+            });
         }
+
+        /* ===============================
+        SORTING
+        =============================== */
+        $query->orderBy('categories.name', 'asc')
+            ->orderBy('products.product_name', 'asc');
+
+        /* ===============================
+        PAGINATION
+        =============================== */
+        $perPage = $request->get('per_page', 10); // FIXED
+
+        $products = $query->paginate($perPage);
+
+        return response()->json($products);
+    }
 
     /* ================= STORE ================= */
 

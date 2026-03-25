@@ -13,10 +13,27 @@ class CategoryController extends Controller
     /* ===========================
        GET ALL
     =========================== */
-    public function index()
+    public function index(Request $request)
     {
-        return Category::orderBy('name', 'asc')->get();
-    }
+        $query = Category::query();
+
+        /* ================= SEARCH ================= */
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        /* ================= SORT ================= */
+        $query->orderBy('name', 'asc');
+
+        /* ================= PAGINATION ================= */
+        $perPage = $request->get('per_page', 10);
+
+        $categories = $query
+            ->paginate($perPage)
+            ->appends($request->all());
+
+        return response()->json($categories);
+}
 
     /* ===========================
        GET ONE
