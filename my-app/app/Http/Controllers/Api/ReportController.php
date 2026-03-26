@@ -126,6 +126,7 @@ public function inventory(Request $request)
                 INNER JOIN users u ON u.id = r.requestor_id
                 WHERE u.dealership_id = {$dealershipId}
                 AND r.created_at BETWEEN '{$startDate}' AND '{$endDate}'
+                AND r.status <> 'PENDING_ACCOUNTING'
                 GROUP BY ri.product_id
             ) as req
         "), 'p.id', '=', 'req.product_id')
