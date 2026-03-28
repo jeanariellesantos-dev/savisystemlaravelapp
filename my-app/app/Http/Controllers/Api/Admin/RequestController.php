@@ -110,7 +110,6 @@ class RequestController extends Controller
                 ]);
             }
 
-            // ✅ FIX HERE
             $remarks = trim($validated['remarks'] ?? '');
 
             $formattedRemarks = "[ADMIN]: Ordered. " . (

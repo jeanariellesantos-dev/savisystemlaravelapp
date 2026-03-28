@@ -97,7 +97,7 @@ class ApprovalController extends Controller
         | UPDATE ITEMS (ONLY IF PROVIDED)
         |--------------------------------------------------------------------------
         */
-        if ($request->action === 'APPROVED' && $request->has('items') && $role=== 'ACCOUNTING' ) {
+        if ($request->action === 'APPROVED' && $request->has('items') ) {
 
                 $insufficientProducts = [];
 
@@ -135,28 +135,30 @@ class ApprovalController extends Controller
                         $starting = 0;
                         $ending = 0;
 
-                        // ✅ ONLY ACCOUNTING computes balances
+                        // ✅ ONLY CLUSTER_HEAD computes balances
                         $product = Product::find($item['product_id']);
 
-                        $starting = $product->stock;
-                        $ending = $starting - $item['quantity'];
+                        if ($roleName === 'CLUSTER_HEAD'){
+                            $starting = $product->stock;
+                            $ending = $starting - $item['quantity'];
 
-                        $product->update([
-                            'stock' => $ending
-                        ]);
+                            $product->update([
+                                'stock' => $ending
+                            ]);
 
-                        InventoryMovement::create([
-                            'product_id' => $item['product_id'],
-                            'dealership_id' => $user->dealership_id,
-                            'type' => 'OUT',
-                            'quantity' => $item['quantity'], 
-                            'starting_balance' => $starting,
-                            'ending_balance' => $ending,
-                            'unit_id' => $item['unit_id'], 
-                            'reference_type' => 'request',
-                            'reference_id' => $req->id,
-                            'created_by' => $user->id
-                        ]);
+                            InventoryMovement::create([
+                                'product_id' => $item['product_id'],
+                                'dealership_id' => $user->dealership_id,
+                                'type' => 'OUT',
+                                'quantity' => $item['quantity'], 
+                                'starting_balance' => $starting,
+                                'ending_balance' => $ending,
+                                'unit_id' => $item['unit_id'], 
+                                'reference_type' => 'request',
+                                'reference_id' => $req->id,
+                                'created_by' => $user->id
+                            ]);
+                        }
 
                         $req->items()->create([
                             'product_id' => $item['product_id'],

@@ -25,6 +25,7 @@ Route::middleware('auth:api')->group(function () {
                 Route::post('/users', [UserController::class, 'store']);
                 Route::patch('/users/{user}/toggle', [UserController::class, 'toggleStatus']);
                 Route::put('/users/{user}', [UserController::class, 'update']);
+                Route::delete('/users/{user}', [UserController::class, 'destroy']);
                 // ADMIN
                 Route::prefix('requests')->group(function () {
 
@@ -40,11 +41,11 @@ Route::middleware('auth:api')->group(function () {
 
                 });
 
-
                 Route::prefix('inventory')->group(function () {
                     Route::get('/', [InventoryController::class, 'index']);
                     Route::post('/', [InventoryController::class, 'store']);          // create
                     Route::post('/{id}/reverse', [InventoryController::class, 'reverse']);
+                    
                 });
 
                 Route::apiResource('categories', CategoryController::class);
@@ -59,6 +60,7 @@ Route::middleware('auth:api')->group(function () {
                 Route::delete('products/{product}', [ProductController::class, 'destroy']);
                 Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus']);
                 Route::get('/products/{id}/units', [ProductController::class, 'units']);
+                
 
                 Route::get('units', [UnitController::class, 'index']);
                 Route::get('units/{id}', [UnitController::class, 'getByProductId']);

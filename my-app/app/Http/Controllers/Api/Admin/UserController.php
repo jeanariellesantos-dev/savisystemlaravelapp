@@ -177,4 +177,34 @@ class UserController extends Controller
             'is_active' => $user->is_active
         ]);
     }
+
+    /* ======================================================
+    * DELETE USER
+    * ====================================================== */
+    public function destroy(User $user)
+    {
+        // ❌ prevent deleting yourself
+        if ($user->id === auth()->id()) {
+            return response()->json([
+                'message' => 'You cannot delete your own account'
+            ], 403);
+        }
+
+        // optional: prevent deleting super admin (if needed)
+        // if ($user->role_id === 1) {
+        //     return response()->json([
+        //         'message' => 'Cannot delete super admin'
+        //     ], 403);
+        // }
+
+        // ✅ soft delete (recommended if using SoftDeletes)
+        // $user->delete();
+
+        // ✅ hard delete
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User deleted successfully'
+        ]);
+    }
 }
