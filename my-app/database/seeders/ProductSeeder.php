@@ -150,6 +150,7 @@ class ProductSeeder extends Seeder
                     [
                         'product_name' => $productName,
                         'category_id' => $category->id,
+                        'stock' => 50,
                     ],
                     [
                         'description' => $productName,

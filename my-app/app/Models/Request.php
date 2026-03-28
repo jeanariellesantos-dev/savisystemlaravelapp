@@ -10,6 +10,30 @@ class Request extends Model
 
     protected $fillable = [ 'requestor_id', 'status'];
 
+    protected static function booted()
+    {
+        // ✅ existing logic
+        static::creating(function ($model) {
+            $model->request_id = 'REQ'
+                . now()->format('YmdHis')
+                . random_int(10, 99);
+        });
+
+        // 🔥 ADD THIS
+        static::deleting(function ($request) {
+            $request->approvals()->delete();
+            $request->items()->delete();
+            $request->shipments()->delete();
+            $request->requestStatusLog()->delete();
+        });
+
+        static::creating(function ($model) {
+            $model->request_id = 'REQ'
+                . now()->format('YmdHis')
+                . random_int(10, 99);
+        });
+    }
+
     public function approvals()
     {
         return $this->hasMany(Approval::class);
@@ -28,19 +52,9 @@ class Request extends Model
     {
         return $this->hasMany(RequestItem::class,'request_id');
     }
-
     public function requestStatusLog()
     {
         return $this->hasMany(RequestStatusLog::class);
     }
     
-     protected static function booted()
-    {
-        static::creating(function ($model) {
-            $model->request_id = 'REQ'
-                . now()->format('YmdHis')
-                . random_int(10, 99);
-        });
-    }
-
 }

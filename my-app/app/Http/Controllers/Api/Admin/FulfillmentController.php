@@ -68,7 +68,7 @@ class FulfillmentController extends Controller
                 ]);
             }
 
-            $formattedRemarks = "[ADMIN]: " . (
+            $formattedRemarks = "[ADMIN]: Shipped. " . (
                 $request->filled('remarks')
                     ? trim($request->remarks)
                     : 'No remarks provided'
@@ -131,7 +131,7 @@ class FulfillmentController extends Controller
                 'status' => 'RECEIVED'
             ]);
 
-            $formattedRemarks = "[ADMIN]: " . (
+            $formattedRemarks = "[ADMIN]: Received. " . (
                 $request->filled('remarks')
                     ? trim($request->remarks)
                     : 'No remarks provided'

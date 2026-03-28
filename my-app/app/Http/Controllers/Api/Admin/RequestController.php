@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Request as RequestModel;
 use App\Models\Product;
 use App\Models\RequestStatusLog;
+use App\Models\Approval;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -78,41 +79,66 @@ class RequestController extends Controller
                 ->paginate($perPage)
         );
     }
-
     public function store(AddRequest $request)
     {
         $validated = $request->validated();
+        $user = Auth::user();
 
-        DB::transaction(function () use ($validated, &$req) {
+        $req = null; 
+
+        DB::transaction(function () use ($validated, $user, &$req) {
 
             $req = RequestModel::create([
                 'requestor_id' => $validated['requestor_id'],
-                'status' => $validated['status'],
+                'status'       => $validated['status'],
             ]);
 
             foreach ($validated['items'] as $item) {
 
                 $product = Product::lockForUpdate()->findOrFail($item['product_id']);
 
+                // (optional: keep 0 if no deduction yet)
+                $startingBalance = 0;
+                $endingBalance   = 0;
+
                 $req->items()->create([
-                    'product_id' => $item['product_id'],
-                    'unit_id' => $item['unit_id'],
-                    'quantity' => $item['quantity'],
-                    'starting_balance' => $product->quantity,
-                    'ending_balance' => $product->quantity,
+                    'product_id'       => $item['product_id'],
+                    'unit_id'          => $item['unit_id'],
+                    'quantity'         => $item['quantity'],
+                    'starting_balance' => $startingBalance,
+                    'ending_balance'   => $endingBalance,
                 ]);
             }
 
+            $remarks = trim($validated['remarks'] ?? '');
+
+            $formattedRemarks = "[ADMIN]: Ordered. " . (
+                $remarks !== '' ? $remarks : 'No remarks provided'
+            );
+
+            Approval::create([
+                'request_id'  => $req->id,
+                'approver_id' => $user->id,
+                'role_id'     => $user->id,
+                'action'      => 'ORDERED',
+                'remarks'     => $formattedRemarks
+            ]);
+
             RequestStatusLog::create([
                 'request_id' => $req->id,
-                'updated_by' => Auth::id(),
-                'status' => $req->status,
+                'updated_by' => $user->id,
+                'status'     => $req->status,
             ]);
+
+            return $req;
         });
 
         return response()->json([
             'message' => 'Request created successfully',
-            'data' => $req->load('items.product', 'requestor')
+            'data' => $req->load([
+                'items.product',
+                'requestor',
+            ])
         ], 201);
     }
 

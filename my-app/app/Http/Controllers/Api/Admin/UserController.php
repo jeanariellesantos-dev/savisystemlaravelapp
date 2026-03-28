@@ -14,14 +14,43 @@ class UserController extends Controller
     /* ======================================================
      * LIST USERS
      * ====================================================== */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('role')
-            ->select('id','employee_number','firstname','lastname','email','mobile','is_active','role_id','dealership_id')
-            ->get();
+        $query = User::with('role')
+            ->select(
+                'id',
+                'employee_number',
+                'firstname',
+                'lastname',
+                'email',
+                'mobile',
+                'is_active',
+                'role_id',
+                'dealership_id'
+            );
 
-        return response()->json(
-            $users->map(function ($user) {
+        /* ================= SEARCH ================= */
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('firstname', 'like', "%{$search}%")
+                ->orWhere('lastname', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('employee_number', 'like', "%{$search}%");
+            });
+        }
+
+        /* ================= SORT ================= */
+        $query->orderBy('firstname', 'asc');
+
+        /* ================= PAGINATION ================= */
+        $perPage = $request->get('per_page', 10);
+
+        $users = $query
+            ->paginate($perPage)
+            ->appends($request->all())
+            ->through(function ($user) {
                 return [
                     'id' => $user->id,
                     'employee_number' => $user->employee_number,
@@ -34,8 +63,9 @@ class UserController extends Controller
                     'role' => $user->role?->role_name ?? null,
                     'is_active' => $user->is_active,
                 ];
-            })
-        );
+            });
+
+        return response()->json($users);
     }
 
     /* ======================================================
@@ -145,6 +175,36 @@ class UserController extends Controller
         return response()->json([
             'message' => 'Status updated',
             'is_active' => $user->is_active
+        ]);
+    }
+
+    /* ======================================================
+    * DELETE USER
+    * ====================================================== */
+    public function destroy(User $user)
+    {
+        // ❌ prevent deleting yourself
+        if ($user->id === auth()->id()) {
+            return response()->json([
+                'message' => 'You cannot delete your own account'
+            ], 403);
+        }
+
+        // optional: prevent deleting super admin (if needed)
+        // if ($user->role_id === 1) {
+        //     return response()->json([
+        //         'message' => 'Cannot delete super admin'
+        //     ], 403);
+        // }
+
+        // ✅ soft delete (recommended if using SoftDeletes)
+        // $user->delete();
+
+        // ✅ hard delete
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User deleted successfully'
         ]);
     }
 }

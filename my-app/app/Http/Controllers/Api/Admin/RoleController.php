@@ -11,9 +11,29 @@ class RoleController extends Controller
     /* =========================
         GET ALL ROLES
     ========================== */
-    public function index()
+    public function index(Request $request)
     {
-        $roles = Role::orderBy('created_at', 'desc')->get();
+        $query = Role::query();
+
+        /* ================= SEARCH ================= */
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('role_name', 'like', "%{$search}%")
+                ->orWhere('role_description', 'like', "%{$search}%");
+            });
+        }
+
+        /* ================= SORT ================= */
+        $query->orderBy('role_name', 'asc');
+
+        /* ================= PAGINATION ================= */
+        $perPage = $request->get('per_page', 10);
+
+        $roles = $query
+            ->paginate($perPage)
+            ->appends($request->all()); // keep search on pagination
 
         return response()->json($roles);
     }
