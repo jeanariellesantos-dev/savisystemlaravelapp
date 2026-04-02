@@ -92,8 +92,6 @@ public function inventory(Request $request)
             ) as last_im
         "), 'p.id', '=', 'last_im.product_id')
 
-        ->leftJoin('units as u', 'last_im.unit_id', '=', 'u.id')
-
         ->leftJoin(DB::raw("
             (
                 SELECT product_id, SUM(ABS(quantity)) as delivered
@@ -120,6 +118,7 @@ public function inventory(Request $request)
             (
                 SELECT 
                     ri.product_id, 
+                    ri.unit_id,
                     SUM(ri.quantity) as ordered
                 FROM request_items ri
                 INNER JOIN requests r ON r.id = ri.request_id
@@ -127,10 +126,11 @@ public function inventory(Request $request)
                 WHERE u.dealership_id = {$dealershipId}
                 AND r.created_at BETWEEN '{$startDate}' AND '{$endDate}'
                 AND r.status <> 'PENDING_ACCOUNTING'
-                GROUP BY ri.product_id
+                GROUP BY ri.product_id, ri.unit_id
             ) as req
         "), 'p.id', '=', 'req.product_id')
 
+        ->leftJoin('units as u', 'req.unit_id', '=', 'u.id')
         ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
 
         ->select(
