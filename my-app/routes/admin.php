@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Admin\UserController;
 use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\ProductController;
+use App\Http\Controllers\Api\Admin\InventoryController;
 use App\Http\Controllers\Api\Admin\UnitController;
 use App\Http\Controllers\Api\Admin\DealershipController;
 use App\Http\Controllers\Api\Admin\RoleController;
@@ -24,6 +25,7 @@ Route::middleware('auth:api')->group(function () {
                 Route::post('/users', [UserController::class, 'store']);
                 Route::patch('/users/{user}/toggle', [UserController::class, 'toggleStatus']);
                 Route::put('/users/{user}', [UserController::class, 'update']);
+                Route::delete('/users/{user}', [UserController::class, 'destroy']);
                 // ADMIN
                 Route::prefix('requests')->group(function () {
 
@@ -38,6 +40,14 @@ Route::middleware('auth:api')->group(function () {
                     Route::post('/{id}/receive', [FulfillmentController::class, 'receive']);
 
                 });
+
+                Route::prefix('inventory')->group(function () {
+                    Route::get('/', [InventoryController::class, 'index']);
+                    Route::post('/', [InventoryController::class, 'store']);          // create
+                    Route::post('/{id}/reverse', [InventoryController::class, 'reverse']);
+                    
+                });
+
                 Route::apiResource('categories', CategoryController::class);
 
                 Route::patch('categories/{category}/toggle', 
@@ -50,8 +60,10 @@ Route::middleware('auth:api')->group(function () {
                 Route::delete('products/{product}', [ProductController::class, 'destroy']);
                 Route::patch('products/{product}/toggle-status', [ProductController::class, 'toggleStatus']);
                 Route::get('/products/{id}/units', [ProductController::class, 'units']);
+                
 
                 Route::get('units', [UnitController::class, 'index']);
+                Route::get('units/{id}', [UnitController::class, 'getByProductId']);
                 Route::post('units', [UnitController::class, 'store']);
                 Route::put('units/{unit}', [UnitController::class, 'update']);
                 Route::delete('units/{unit}', [UnitController::class, 'destroy']);

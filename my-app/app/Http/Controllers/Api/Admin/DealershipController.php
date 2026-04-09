@@ -11,9 +11,24 @@ class DealershipController extends Controller
     /* ===============================
         GET ALL DEALERSHIPS
     =============================== */
-    public function index()
+    public function index(Request $request)
     {
-        $dealerships = Dealership::latest()->get();
+        $query = Dealership::query();
+
+        /* ================= SEARCH ================= */
+        if ($request->filled('search')) {
+            $query->where('dealership_name', 'like', '%' . $request->search . '%');
+        }
+
+        /* ================= SORT ================= */
+        $query->orderBy('dealership_name', 'asc');
+
+        /* ================= PAGINATION ================= */
+        $perPage = $request->get('per_page', 10);
+
+        $dealerships = $query
+            ->paginate($perPage)
+            ->appends($request->all());
 
         return response()->json($dealerships);
     }

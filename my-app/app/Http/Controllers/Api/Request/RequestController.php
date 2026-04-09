@@ -7,6 +7,7 @@ use App\Models\RequestStatusLog;
 use Illuminate\Http\Request;
 use App\Models\Request as RequestModel;
 use App\Models\Product;
+use App\Models\Approval;
 use App\Http\Requests\AddRequest;
 use App\Http\Requests\UpdateRequest;
 use Illuminate\Support\Facades\Log;
@@ -35,7 +36,11 @@ class RequestController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('status', 'like', "%{$search}%");
+                $q->where('request_id', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%")
+                  ->orWhereHas('requestor', function ($q) use ($search) {
+                      $q->where('firstname', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -52,44 +57,31 @@ class RequestController extends Controller
         );
     }
 
-
-    //Add new request
     public function store(AddRequest $request)
     {
-        // ✅ Authenticated via Bearer token (auth:api middleware should already enforce this)
         $user = Auth::user();
 
         if (!$user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        // ✅ Validation (you can move this fully into AddRequest later)
-        $validated = $request->validate([
-            'requestor_id' => 'required|exists:users,id', 
-            'status' => 'required|string|max:255',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.unit_id' => 'required|exists:units,id',
-            'items.*.quantity' => 'required|integer|min:1',
-        ]);
+        $validated = $request->validated();
+
+        $req = null;
 
         DB::transaction(function () use ($validated, $user, &$req) {
 
-            // ✅ Create request
             $req = RequestModel::create([
-                'requestor_id' =>  $validated['requestor_id'] ,
-                'status' => $validated['status'],
+                'requestor_id' => $validated['requestor_id'],
+                'status'       => $validated['status'],
             ]);
 
-            // ✅ Create request items + update inventory
             foreach ($validated['items'] as $item) {
+
                 $product = Product::lockForUpdate()->findOrFail($item['product_id']);
 
-                $startingBalance = 0;
-                $endingBalance   = 0;
-
-                // $startingBalance = $product->quantity;
-                // $endingBalance   = $startingBalance - $item['quantity'];
+                $startingBalance = $product->stock;
+                $endingBalance   = $startingBalance - $item['quantity'];
 
                 // if ($endingBalance < 0) {
                 //     throw new \Exception("Insufficient stock for {$product->product_name}");
@@ -101,14 +93,28 @@ class RequestController extends Controller
 
                 $req->items()->create([
                     'product_id'       => $product->id,
-                    'unit_id'         => $item['unit_id'],
+                    'unit_id'          => $item['unit_id'],
                     'quantity'         => $item['quantity'],
                     'starting_balance' => $startingBalance,
                     'ending_balance'   => $endingBalance,
                 ]);
             }
 
-            // ✅ Log initial status
+            // ✅ FIX: use array access
+            $remarks = trim($validated['remarks'] ?? '');
+
+            $formattedRemarks = "[OPERATION]: Ordered. " . (
+                $remarks !== '' ? $remarks : 'No remarks provided'
+            );
+
+            Approval::create([
+                'request_id'  => $req->id,
+                'approver_id' => $user->id,
+                'role_id'     => $user->id,
+                'action'      => 'ORDERED',
+                'remarks'     => $formattedRemarks
+            ]);
+
             RequestStatusLog::create([
                 'request_id' => $req->id,
                 'updated_by' => $user->id,
@@ -121,10 +127,8 @@ class RequestController extends Controller
                 'ACCOUNTING',
                 'PENDING'
             );
-
         });
 
-        // ✅ Return the CREATED request (NOT the HTTP request object)
         return response()->json([
             'message' => 'Request created successfully',
             'data' => $req->load([
@@ -192,7 +196,7 @@ class RequestController extends Controller
         ]);
     }
 
-public function pending()
+public function pending(Request $request)
 {
     $user = auth()->user();
     $roleName = $user->role->role_name;
@@ -213,6 +217,19 @@ public function pending()
             'approvals:id,request_id,remarks,created_at',
             'shipments:id,request_id,shipped_date,received_date,tracking_link',
         ]);
+
+
+    // 🔍 Search filter
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('request_id', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhereHas('requestor', function ($q) use ($search) {
+                    $q->where('firstname', 'like', "%{$search}%");
+                });
+        });
+    }
 
     // OPERATION VIEW
     if ($roleName === 'OPERATION') {
@@ -241,7 +258,7 @@ public function pending()
         ->paginate(8);
 }
 
-public function history()
+public function history(Request $request)
 {
     $user = auth()->user();
     $roleName = $user->role->role_name;
@@ -254,6 +271,18 @@ public function history()
         'approvals:id,request_id,approver_id,remarks,created_at',
         'shipments:id,request_id,shipped_date,received_date,tracking_link'
     ]);
+
+        // 🔍 Search filter
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('request_id', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhereHas('requestor', function ($q) use ($search) {
+                    $q->where('firstname', 'like', "%{$search}%");
+                });
+        });
+    }
 
     // ================= OPERATION =================
     if ($roleName === 'OPERATION') {

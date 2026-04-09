@@ -11,11 +11,36 @@ class ProductController extends Controller
 {
     /* ================= INDEX ================= */
 
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with(['category', 'units'])
-            ->latest()
-            ->get();
+        $query = Product::with(['category', 'units'])
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->select('products.*');
+
+        /* ===============================
+        SEARCH
+        =============================== */
+        if ($request->filled('search')) {
+            $search = $request->search;
+
+            $query->where(function ($q) use ($search) {
+                $q->where('products.product_name', 'like', "%{$search}%")
+                ->orWhere('categories.name', 'like', "%{$search}%");
+            });
+        }
+
+        /* ===============================
+        SORTING
+        =============================== */
+        $query->orderBy('categories.name', 'asc')
+            ->orderBy('products.product_name', 'asc');
+
+        /* ===============================
+        PAGINATION
+        =============================== */
+        $perPage = $request->get('per_page', 10); // FIXED
+
+        $products = $query->paginate($perPage);
 
         return response()->json($products);
     }
@@ -27,6 +52,7 @@ class ProductController extends Controller
             $validated = $request->validate([
                 'product_name' => 'required|string|max:255',
                 'category_id'  => 'required|exists:categories,id',
+                'stock'        => 'required|integer|min:0',
                 'unit_ids'     => 'nullable|array',
                 'unit_ids.*'   => 'exists:units,id',
             ]);
@@ -34,6 +60,7 @@ class ProductController extends Controller
             $product = Product::create([
                 'product_name' => $validated['product_name'],
                 'category_id'  => $validated['category_id'],
+                'stock' => $validated['stock'],
                 'is_active'    => true,
             ]);
 
@@ -62,12 +89,14 @@ class ProductController extends Controller
         $validated = $request->validate([
             'product_name' => 'required|string|max:255',
             'category_id'  => 'required|exists:categories,id',
+            'stock'        => 'required|integer|min:0',
             'unit_ids'     => 'nullable|array',
             'unit_ids.*'   => 'exists:units,id',
         ]);
 
         $product->update([
             'product_name' => $validated['product_name'],
+            'stock'        => $validated['stock'],
             'category_id'  => $validated['category_id'],
         ]);
 

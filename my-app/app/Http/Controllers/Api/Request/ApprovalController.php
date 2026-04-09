@@ -7,8 +7,11 @@ use Illuminate\Http\Request;
 use App\Models\Approval;
 use App\Models\Request as RequestModel;
 use App\Models\RequestStatusLog;
+use App\Models\Product;
+use App\Models\InventoryMovement;
 use App\Customs\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ApprovalController extends Controller
 {
@@ -94,24 +97,79 @@ class ApprovalController extends Controller
         | UPDATE ITEMS (ONLY IF PROVIDED)
         |--------------------------------------------------------------------------
         */
+        if ($request->action === 'APPROVED' && $request->has('items') ) {
 
-        if ($request->action === 'APPROVED' && $request->has('items')) {
-
-            DB::transaction(function () use ($request, $req) {
-
-                $req->items()->delete();
+                $insufficientProducts = [];
 
                 foreach ($request->items as $item) {
-                    $req->items()->create([
-                        'product_id' => $item['product_id'],
-                        'unit_id' => $item['unit_id'],
-                        'quantity' => $item['quantity'],
-                        'starting_balance' => 0,
-                        'ending_balance' => 0,
-                    ]);
+
+                    $product = Product::find($item['product_id']);
+
+                    if ($product->stock < $item['quantity']) {
+                        $insufficientProducts[] = [
+                            'product_id' => $product->id,
+                            'product_name' => $product->product_name,
+                            'available_stock' => $product->stock,
+                            'requested_quantity' => $item['quantity'],
+                            'shortage' => $item['quantity'] - $product->stock,
+                        ];
+                    }
                 }
 
-            });
+                if (!empty($insufficientProducts)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Insufficient stock',
+                        'errors' => [
+                            'insufficient_products' => $insufficientProducts
+                        ]
+                    ], 200); // ✅ force 200
+                }
+
+                DB::transaction(function () use ($request, $req, $roleName, $user) {
+
+                    $req->items()->delete();
+
+                    foreach ($request->items as $item) {
+
+                        $starting = 0;
+                        $ending = 0;
+
+                        // ✅ ONLY CLUSTER_HEAD computes balances
+                        $product = Product::find($item['product_id']);
+
+                        if ($roleName === 'CLUSTER_HEAD'){
+                            $starting = $product->stock;
+                            $ending = $starting - $item['quantity'];
+
+                            $product->update([
+                                'stock' => $ending
+                            ]);
+
+                            InventoryMovement::create([
+                                'product_id' => $item['product_id'],
+                                'dealership_id' => $user->dealership_id,
+                                'type' => 'OUT',
+                                'quantity' => $item['quantity'], 
+                                'starting_balance' => $starting,
+                                'ending_balance' => $ending,
+                                'unit_id' => $item['unit_id'], 
+                                'reference_type' => 'request',
+                                'reference_id' => $req->id,
+                                'created_by' => $user->id
+                            ]);
+                        }
+
+                        $req->items()->create([
+                            'product_id' => $item['product_id'],
+                            'unit_id' => $item['unit_id'],
+                            'quantity' => $item['quantity'],
+                            'starting_balance' => $starting,
+                            'ending_balance' => $ending,
+                        ]);
+                            
+                    }
+                });
         }
 
         /*

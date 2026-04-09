@@ -7,7 +7,8 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'https://jeanariellesantos-dev.github.io'
+        'https://jeanariellesantos-dev.github.io',
+        'https://savisystem.vercel.app'
     ],
 
     'allowed_origins_patterns' => ['/^http:\/\/localhost:\d+$/'],
