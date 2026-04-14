@@ -27,7 +27,9 @@ class AddRequest extends FormRequest
             'status' => 'required|string|max:255',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
+            'items.*.unit_id' => 'required|exists:units,id',
             'items.*.quantity' => 'required|integer|min:1',
+            'remarks' => 'nullable|string',
         ];
     }
 }

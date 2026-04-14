@@ -61,7 +61,7 @@ class FulfillmentController extends Controller
             ]);
         }
         // ✅ Prefix remarks with role (only if remarks exist)
-        $formattedRemarks = "[{$role}]: " . (
+        $formattedRemarks = "[{$role}]: Shipped. " . (
             $request->filled('remarks')
                 ? trim($request->remarks)
                 : 'No remarks provided'
@@ -106,7 +106,7 @@ class FulfillmentController extends Controller
         $req->save();
 
          // ✅ Prefix remarks with role (only if remarks exist)
-        $formattedRemarks = "[{$role}]: " . (
+        $formattedRemarks = "[{$role}]: Received. " . (
             $request->filled('remarks')
                 ? trim($request->remarks)
                 : 'No remarks provided'

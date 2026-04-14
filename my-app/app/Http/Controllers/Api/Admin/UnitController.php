@@ -5,17 +5,34 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Unit;
+use App\Models\Product;
+
 
 class UnitController extends Controller
 {
     /* =========================
        GET ALL UNITS
     ========================= */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(
-            Unit::orderBy('name')->get()
-        );
+        $query = Unit::query();
+
+        /* ================= SEARCH ================= */
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        /* ================= SORT ================= */
+        $query->orderBy('name', 'asc');
+
+        /* ================= PAGINATION ================= */
+        $perPage = $request->get('per_page', 10);
+
+        $units = $query
+            ->paginate($perPage)
+            ->appends($request->all());
+
+        return response()->json($units);
     }
 
     /* =========================
@@ -76,5 +93,18 @@ class UnitController extends Controller
         $unit->save();
 
         return response()->json($unit);
+    }
+
+    public function getByProductId($id)
+    {
+        $product = Product::with('units:id,name,abbreviation')
+            ->findOrFail($id);
+
+        return response()->json(
+            $product->units->map(fn ($unit) => [
+                'id'   => $unit->id,
+                'name' => $unit->name,
+            ])
+        );
     }
 }

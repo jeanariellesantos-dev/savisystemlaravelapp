@@ -23,6 +23,24 @@ class ProductController extends Controller
         );
     }
 
+    public function getAll()
+    {
+        return response()->json(
+            Product::with('category:id,name')
+                ->where('is_active', true)
+                ->orderBy('product_name')
+                ->get()
+                ->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'product_name' => $product->product_name,
+                        'category_id' => $product->category_id,
+                        'category_name' => $product->category?->name,
+                    ];
+                })
+        );
+    }
+
     public function show(Product $product)
     {
         return response()->json([
