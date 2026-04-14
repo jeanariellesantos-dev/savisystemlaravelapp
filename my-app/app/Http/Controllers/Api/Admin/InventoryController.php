@@ -39,6 +39,11 @@ public function index(Request $request)
             $query->where('im.dealership_id', $request->dealership_id);
         }
 
+        // ✅ Search
+        if ($request->search) {
+            $query->where('p.product_name', 'like', "%{$request->search}%");
+        }
+
         if ($request->product_id) {
             $query->where('im.product_id', $request->product_id);
         }

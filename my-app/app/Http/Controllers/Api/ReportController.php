@@ -148,7 +148,6 @@ public function inventory(Request $request)
         ->get();
 }
 
-
 public function exportExcel(Request $request)
 {
     $response = $this->inventory($request)->getData(true);
