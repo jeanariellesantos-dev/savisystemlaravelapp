@@ -94,12 +94,12 @@ public function inventory(Request $request)
 
         ->leftJoin(DB::raw("
             (
-                SELECT product_id, SUM(ABS(quantity)) as delivered
+                SELECT product_id, unit_id, SUM(ABS(quantity)) as delivered
                 FROM inventory_movements
                 WHERE dealership_id = {$dealershipId}
                 AND type = 'OUT'
                 AND created_at BETWEEN '{$startDate}' AND '{$endDate}'
-                GROUP BY product_id
+                GROUP BY product_id, unit_id
             ) as im_out
         "), 'p.id', '=', 'im_out.product_id')
 
