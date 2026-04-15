@@ -142,7 +142,7 @@ public function inventory(Request $request)
             DB::raw('COALESCE(im_adjust.adjustment, 0) as adjustment'),
             DB::raw('COALESCE(last_im.ending_balance, 0) as ending')
         )
-        ->whereRaw('COALESCE(req.ordered, 0) > 0')
+      //  ->whereRaw('COALESCE(req.ordered, 0) > 0')
         ->orderBy('c.name', 'asc')
         ->orderBy('p.product_name', 'asc')
         ->get();
