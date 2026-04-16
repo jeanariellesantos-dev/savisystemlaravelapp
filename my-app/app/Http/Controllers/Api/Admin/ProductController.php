@@ -32,15 +32,23 @@ class ProductController extends Controller
         /* ===============================
         SORTING
         =============================== */
-        $query->orderBy('categories.name', 'asc')
+        $query
+            // ->orderBy('categories.name', 'asc')
             ->orderBy('products.product_name', 'asc');
 
         /* ===============================
         PAGINATION
         =============================== */
-        $perPage = $request->get('per_page', 10); // FIXED
 
-        $products = $query->paginate($perPage);
+        $perPage = $request->get('per_page', 10);
+
+        if ($request->has('page')) {
+            $products = $query->paginate($perPage);
+        } else {
+            $products = [
+                'data' => $query->get()
+            ];
+        }
 
         return response()->json($products);
     }
