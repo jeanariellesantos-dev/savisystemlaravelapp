@@ -79,6 +79,22 @@ public function inventory(Request $request)
 
         ->leftJoin(DB::raw("
             (
+                SELECT 
+                    ri.product_id, 
+                    ri.unit_id,
+                    SUM(ri.quantity) as ordered
+                FROM request_items ri
+                INNER JOIN requests r ON r.id = ri.request_id
+                INNER JOIN users u ON u.id = r.requestor_id
+                WHERE u.dealership_id = {$dealershipId}
+                AND ri.created_at BETWEEN '{$startDate}' AND '{$endDate}'
+                AND r.status <> 'PENDING_ACCOUNTING'
+                GROUP BY ri.product_id, ri.unit_id
+            ) as req
+        "), 'p.id', '=', 'req.product_id')
+
+        ->leftJoin(DB::raw("
+            (
                 SELECT im1.*
                 FROM inventory_movements im1
                 INNER JOIN (
@@ -114,22 +130,6 @@ public function inventory(Request $request)
             ) as im_adjust
         "), 'p.id', '=', 'im_adjust.product_id')
 
-        ->leftJoin(DB::raw("
-            (
-                SELECT 
-                    ri.product_id, 
-                    ri.unit_id,
-                    SUM(ri.quantity) as ordered
-                FROM request_items ri
-                INNER JOIN requests r ON r.id = ri.request_id
-                INNER JOIN users u ON u.id = r.requestor_id
-                WHERE u.dealership_id = {$dealershipId}
-                AND r.created_at BETWEEN '{$startDate}' AND '{$endDate}'
-                AND r.status <> 'PENDING_ACCOUNTING'
-                GROUP BY ri.product_id, ri.unit_id
-            ) as req
-        "), 'p.id', '=', 'req.product_id')
-
         ->leftJoin('units as u', 'req.unit_id', '=', 'u.id')
         ->leftJoin('categories as c', 'p.category_id', '=', 'c.id')
 
@@ -142,7 +142,7 @@ public function inventory(Request $request)
             DB::raw('COALESCE(im_adjust.adjustment, 0) as adjustment'),
             DB::raw('COALESCE(last_im.ending_balance, 0) as ending')
         )
-      //  ->whereRaw('COALESCE(req.ordered, 0) > 0')
+        ->whereRaw('COALESCE(req.ordered, 0) > 0')
         ->orderBy('c.name', 'asc')
         ->orderBy('p.product_name', 'asc')
         ->get();
